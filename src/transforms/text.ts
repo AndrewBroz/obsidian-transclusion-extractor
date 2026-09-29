@@ -20,6 +20,15 @@ export function removeSpan(text: string, start: number, end: number): string {
   const before = text.slice(lineStart, start);
   const after = text.slice(end, lineEnd);
   if (/^[\s>]*$/.test(before) && after.trim() === "") return removeLines(text, lineStart, lineEnd);
+  // Inline branch: if span starts a line, skip trailing spaces
+  if (/^[\s>]*$/.test(before)) {
+    let newEnd = end;
+    while (newEnd < lineEnd && (text[newEnd] === ' ' || text[newEnd] === '\t')) {
+      newEnd++;
+    }
+    return text.slice(0, start) + text.slice(newEnd);
+  }
+  // Otherwise keep the existing preceding-space logic
   let s = start;
   if (text[s - 1] === " " && (text[end] === " " || end === lineEnd)) s--;
   return text.slice(0, s) + text.slice(end);

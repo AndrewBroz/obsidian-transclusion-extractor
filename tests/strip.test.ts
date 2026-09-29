@@ -22,6 +22,9 @@ describe("stripComments", () => {
     const text = "```\n%%x%%\n```";
     expect(stripComments(text)).toBe(text);
   });
+  it("removes a comment that starts the line, including trailing space", () => {
+    expect(stripComments("%%TODO%% remember")).toBe("remember");
+  });
 });
 
 describe("stripBlockIds", () => {

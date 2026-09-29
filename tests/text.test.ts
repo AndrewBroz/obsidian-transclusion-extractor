@@ -32,4 +32,10 @@ describe("removeSpan", () => {
   it("treats a quote marker as empty when deciding to remove the line", () => {
     expect(removeSpan("> A\n> XX", 6, 8)).toBe("> A");
   });
+  it("drops trailing space after a span that starts its line", () => {
+    expect(removeSpan("A\n%%drop%% keep", 2, 10)).toBe("A\nkeep");
+  });
+  it("drops trailing space in a quote when span starts the line", () => {
+    expect(removeSpan("> XX keep", 2, 4)).toBe("> keep");
+  });
 });
