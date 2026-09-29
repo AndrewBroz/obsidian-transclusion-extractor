@@ -19,7 +19,8 @@ export async function flushEditors(app: App, timeoutMs = 2000): Promise<void> {
   await Promise.all(waits);
 }
 
-function waitForCacheChange(app: App, file: TFile, timeoutMs: number): Promise<void> {
+/** Resolves when the metadata cache reports `file` changed, or after `timeoutMs`. */
+export function waitForCacheChange(app: App, file: TFile, timeoutMs: number): Promise<void> {
   return new Promise((resolve) => {
     const ref = app.metadataCache.on("changed", (changed) => {
       if (changed.path === file.path) finish();

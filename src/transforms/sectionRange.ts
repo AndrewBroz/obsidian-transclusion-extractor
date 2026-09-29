@@ -37,3 +37,14 @@ export function listItemEndOffset(items: ListItemLike[], rootLine: number): numb
   }
   return end;
 }
+
+/** Whether a slice taken at cached heading offsets really starts with that heading (guards stale caches). */
+export function sliceMatchesHeading(slice: string, headingText: string): boolean {
+  const m = /^[ \t]*#+[ \t]+([^\r\n]*)/.exec(slice);
+  return m !== null && m[1].trim().startsWith(headingText.trim());
+}
+
+/** Whether a slice taken at cached block offsets contains the block's ^id marker (guards stale caches). */
+export function sliceHasBlockId(slice: string, id: string): boolean {
+  return slice.includes("^" + id);
+}

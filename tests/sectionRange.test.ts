@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { headingEndOffset, listItemEndOffset } from "../src/transforms/sectionRange";
+import { headingEndOffset, listItemEndOffset, sliceHasBlockId, sliceMatchesHeading } from "../src/transforms/sectionRange";
 
 const h = (level: number, offset: number) => ({ level, position: { start: { line: 0, offset } } });
 const li = (line: number, parent: number, endOffset: number) => ({
@@ -26,5 +26,24 @@ describe("listItemEndOffset", () => {
   });
   it("covers only the item itself when it has no children", () => {
     expect(listItemEndOffset(items, 0)).toBe(7);
+  });
+});
+
+describe("sliceMatchesHeading", () => {
+  it("accepts a slice starting with that heading", () => {
+    expect(sliceMatchesHeading("## Setup steps\nbody", "Setup steps")).toBe(true);
+    expect(sliceMatchesHeading("#\tSetup  \nbody", " Setup ")).toBe(true);
+  });
+  it("rejects a slice that starts elsewhere (stale offsets)", () => {
+    expect(sliceMatchesHeading("tup steps\nbody", "Setup steps")).toBe(false);
+    expect(sliceMatchesHeading("## Other\nbody", "Setup steps")).toBe(false);
+    expect(sliceMatchesHeading("##Setup steps", "Setup steps")).toBe(false);
+  });
+});
+
+describe("sliceHasBlockId", () => {
+  it("requires the ^id marker in the slice", () => {
+    expect(sliceHasBlockId("A paragraph ^abc", "abc")).toBe(true);
+    expect(sliceHasBlockId("A paragraph", "abc")).toBe(false);
   });
 });
