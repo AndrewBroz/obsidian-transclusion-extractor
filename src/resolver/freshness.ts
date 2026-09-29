@@ -1,4 +1,5 @@
 import { App, MarkdownView, TFile } from "obsidian";
+import { normalizeNewlines } from "../transforms/text";
 
 /**
  * Save every open Markdown editor whose buffer has unsaved changes, and wait until
@@ -10,7 +11,8 @@ export async function flushEditors(app: App, timeoutMs = 2000): Promise<void> {
     const view = leaf.view;
     if (!(view instanceof MarkdownView) || !view.file) continue;
     const file = view.file;
-    const dirty = view.getViewData() !== (await app.vault.read(file));
+    // Compare line-ending-insensitively: a CRLF file never equals its LF editor buffer (source notes must not be re-saved).
+    const dirty = normalizeNewlines(view.getViewData()) !== normalizeNewlines(await app.vault.read(file));
     if (!dirty) continue;
     // Subscribe before saving so we can't miss the "changed" event.
     waits.push(waitForCacheChange(app, file, timeoutMs));
