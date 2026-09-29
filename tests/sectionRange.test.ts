@@ -39,6 +39,19 @@ describe("sliceMatchesHeading", () => {
     expect(sliceMatchesHeading("## Other\nbody", "Setup steps")).toBe(false);
     expect(sliceMatchesHeading("##Setup steps", "Setup steps")).toBe(false);
   });
+  it("ignores an optional ATX closing hash sequence", () => {
+    expect(sliceMatchesHeading("## Title ##", "Title")).toBe(true);
+  });
+  it("accepts an empty ATX heading", () => {
+    expect(sliceMatchesHeading("##\nbody", "")).toBe(true);
+  });
+  it("accepts setext headings", () => {
+    expect(sliceMatchesHeading("Title\n=====\nbody", "Title")).toBe(true);
+    expect(sliceMatchesHeading("Title\n---", "Title")).toBe(true);
+  });
+  it("rejects a setext-looking slice with no underline", () => {
+    expect(sliceMatchesHeading("Title\nnot underline", "Title")).toBe(false);
+  });
 });
 
 describe("blockIdMatches", () => {

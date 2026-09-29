@@ -38,10 +38,27 @@ export function listItemEndOffset(items: ListItemLike[], rootLine: number): numb
   return end;
 }
 
-/** Whether a slice taken at cached heading offsets really starts with that heading (guards stale caches). */
+/**
+ * Whether a slice taken at cached heading offsets really starts with that heading (guards stale caches).
+ * Accepts ATX headings (`#…` with optional whitespace/closing hashes) and setext headings
+ * (a text line underlined with `=` or `-`), matching what Obsidian's cache records.
+ */
 export function sliceMatchesHeading(slice: string, headingText: string): boolean {
-  const m = /^[ \t]*#+[ \t]+([^\r\n]*)/.exec(slice);
-  return m !== null && m[1].trim().startsWith(headingText.trim());
+  const target = headingText.trim();
+
+  const atx = /^[ \t]{0,3}#{1,6}(?:[ \t]+([^\r\n]*))?(?:\r\n|\r|\n|$)/.exec(slice);
+  if (atx) {
+    const text = (atx[1] ?? "")
+      .trim()
+      .replace(/[ \t]+#+[ \t]*$/, "")
+      .trim();
+    return text.startsWith(target);
+  }
+
+  const setext = /^([^\r\n]*)\r?\n[ \t]{0,3}(?:=+|-+)[ \t]*(?:\r\n|\r|\n|$)/.exec(slice);
+  if (setext) return setext[1].trim() === target;
+
+  return false;
 }
 
 /**
