@@ -46,6 +46,29 @@ export function embedAt(text: string, offset: number): EmbedRef | null {
   return findEmbeds(text).find((e) => offset >= e.start && offset <= e.end) ?? null;
 }
 
+/**
+ * Maps a rendered embed widget (as seen in the DOM, spanning `[from, to)` per `posAtDOM`) back to
+ * its source `EmbedRef`. Candidates are embeds whose start lies within `[from, max(to, end of the
+ * line containing from)]` — the wider bound covers widgets (like a callout) whose DOM range starts
+ * before the embed's own line. When `src` (the DOM `src` attribute, target without alias) is given,
+ * only an exact target match is returned — never a guess. When `src` is absent, the single candidate
+ * is returned only if there's exactly one; otherwise the result is ambiguous and `null`.
+ */
+export function embedForWidget(doc: string, from: number, to: number, src: string | null): EmbedRef | null {
+  const lineStart = doc.lastIndexOf("\n", from - 1) + 1;
+  const nl = doc.indexOf("\n", lineStart);
+  const lineEnd = nl === -1 ? doc.length : nl;
+  const rangeEnd = Math.max(to, lineEnd);
+
+  const candidates = findEmbeds(doc).filter((e) => e.start >= from && e.start <= rangeEnd);
+
+  if (src !== null) {
+    const target = src.trim();
+    return candidates.find((e) => e.target === target) ?? null;
+  }
+  return candidates.length === 1 ? candidates[0] : null;
+}
+
 export function blockIdOf(subpath: string): string | null {
   return subpath.startsWith("#^") ? subpath.slice(2) : null;
 }

@@ -1,4 +1,5 @@
 import { Plugin, TFile } from "obsidian";
+import { embedMenuButtonExtension } from "./features/embedMenuButton";
 import { embedUnderCursor, inlineEmbed, isNoteEmbed } from "./features/inlineEmbed";
 import { loadSettings, PluginSettings } from "./settings";
 import { ExportModal } from "./ui/ExportModal";
@@ -10,6 +11,7 @@ export default class TransclusionExtractorPlugin extends Plugin {
   async onload(): Promise<void> {
     this.settings = loadSettings(await this.loadData());
     this.addSettingTab(new SettingsTab(this.app, this));
+    this.registerEditorExtension(embedMenuButtonExtension(this.app));
 
     this.addCommand({
       id: "export-expanded",

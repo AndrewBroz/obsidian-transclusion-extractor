@@ -17,6 +17,12 @@ export function embedUnderCursor(editor: Editor): EmbedHit | null {
   return { ref, line: cursor.line, lineStart: editor.posToOffset({ line: cursor.line, ch: 0 }) };
 }
 
+/** Builds an EmbedHit for a ref located some other way than the cursor (e.g. from a rendered widget). */
+export function embedHitAt(editor: Editor, ref: EmbedRef): EmbedHit {
+  const line = editor.offsetToPos(ref.start).line;
+  return { ref, line, lineStart: editor.posToOffset({ line, ch: 0 }) };
+}
+
 /** False when the embed points at an attachment (image, PDF…), where inlining makes no sense. */
 export function isNoteEmbed(app: App, ref: EmbedRef, sourcePath: string): boolean {
   const dest = ref.linkpath === "" ? null : app.metadataCache.getFirstLinkpathDest(ref.linkpath, sourcePath);
@@ -29,8 +35,12 @@ const FAILURE = {
   "not-markdown": "is not a note",
 } as const;
 
-export async function inlineEmbed(app: App, editor: Editor, file: TFile): Promise<void> {
-  const hit = embedUnderCursor(editor);
+export async function inlineEmbed(
+  app: App,
+  editor: Editor,
+  file: TFile,
+  hit: EmbedHit | null = embedUnderCursor(editor),
+): Promise<void> {
   if (!hit) return;
   const lineText = editor.getLine(hit.line);
 
