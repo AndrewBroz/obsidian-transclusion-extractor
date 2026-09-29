@@ -8,7 +8,7 @@ An Obsidian plugin (desktop only) for notes that are assembled from transclusion
 ## Install (team, via BRAT)
 
 1. Install **BRAT** from Community plugins.
-2. BRAT → *Add beta plugin* → enter `<github-org>/obsidian-transclusion-extractor`.
+2. BRAT → *Add beta plugin* → enter `AndrewBroz/obsidian-transclusion-extractor`.
 3. Enable **Transclusion Extractor** under Community plugins.
 
 BRAT checks for updates automatically.
