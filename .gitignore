@@ -1,0 +1,9 @@
+node_modules/
+main.js
+*.map
+.DS_Store
+test-vault/.obsidian/plugins/transclusion-extractor/main.js
+test-vault/.obsidian/plugins/transclusion-extractor/manifest.json
+test-vault/.obsidian/plugins/transclusion-extractor/styles.css
+test-vault/.obsidian/plugins/transclusion-extractor/data.json
+test-vault/.obsidian/workspace*.json

@@ -1,0 +1,47 @@
+# Transclusion Extractor
+
+An Obsidian plugin (desktop only) for notes that are assembled from transclusions (`![[...]]`).
+
+- **Export with transclusions expanded:** writes a new Markdown file in which every embed is replaced, recursively, by the text it points to. Use it from the command palette, or right-click a note in the file explorer and choose *Export expanded…*.
+- **Inline transclusion:** right-click an embed in the editor, or run *Inline transclusion under cursor*. This replaces that one embed with a copy of its text, which you can then edit on its own. A hidden `%% inlined from [[...]] on <date> %%` marker records where it came from. Cmd-Z undoes it.
+
+## Install (team, via BRAT)
+
+1. Install **BRAT** from Community plugins.
+2. BRAT → *Add beta plugin* → enter `AndrewBroz/obsidian-transclusion-extractor`.
+3. Enable **Transclusion Extractor** under Community plugins.
+
+BRAT checks for updates automatically.
+
+## Export presets
+
+| Option | Publish | Snapshot |
+|---|---|---|
+| Strip block IDs | on | off |
+| Strip comments | on | off |
+| Keep frontmatter | off | on |
+| Nest headings | on | on |
+| Source markers | off | off |
+
+You can edit presets or add your own under Settings → Transclusion Extractor. Toggles in the export dialog apply to that one export only.
+
+Missing or circular embeds become `> [!warning]` callouts in the output, and the completion notice counts them. Wikilinks and image/PDF embeds are left unchanged.
+
+## Development
+
+```bash
+npm install
+npm test          # unit tests (Vitest)
+npm run dev       # watch build into test-vault/.obsidian/plugins/
+```
+
+Open `test-vault/` in Obsidian to try changes. See `test-vault/expected/README.md` for the acceptance check.
+
+## Releasing
+
+```bash
+npm version patch   # bumps package.json, manifest.json, versions.json; tags without a "v"
+git push --follow-tags
+```
+
+The Release workflow runs the tests, builds, and publishes `main.js`, `manifest.json` and `styles.css` to a GitHub release.
