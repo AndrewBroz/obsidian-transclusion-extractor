@@ -6,6 +6,25 @@ export interface Range {
 
 const FENCE = /^[ \t]*(?:>[ \t]?)*[ \t]*(`{3,}|~{3,})/;
 
+function getQuoteDepth(line: string): number {
+  let depth = 0;
+  let i = 0;
+  while (i < line.length) {
+    if (line[i] === " " || line[i] === "\t") {
+      i++;
+    } else if (line[i] === ">") {
+      depth++;
+      i++;
+      if (i < line.length && (line[i] === " " || line[i] === "\t")) {
+        i++;
+      }
+    } else {
+      break;
+    }
+  }
+  return depth;
+}
+
 export function inRanges(ranges: Range[], pos: number): boolean {
   return ranges.some((r) => pos >= r.start && pos < r.end);
 }
@@ -39,7 +58,7 @@ export function findProtectedRanges(text: string): Range[] {
 
 function findFencedRanges(text: string): Range[] {
   const ranges: Range[] = [];
-  let open: { start: number; char: string; len: number } | null = null;
+  let open: { start: number; char: string; len: number; quoteDepth: number } | null = null;
   let pos = 0;
   while (pos < text.length) {
     const nl = text.indexOf("\n", pos);
@@ -47,13 +66,23 @@ function findFencedRanges(text: string): Range[] {
     const line = text.slice(pos, nl === -1 ? text.length : nl);
     const m = FENCE.exec(line);
     if (open) {
-      const rest = m ? line.slice(m.index + m[0].length) : "";
-      if (m && m[1][0] === open.char && m[1].length >= open.len && rest.trim() === "") {
-        ranges.push({ start: open.start, end: lineEnd });
+      const currentDepth = getQuoteDepth(line);
+      if (currentDepth < open.quoteDepth) {
+        ranges.push({ start: open.start, end: pos });
         open = null;
+        if (m) {
+          open = { start: pos, char: m[1][0], len: m[1].length, quoteDepth: currentDepth };
+        }
+      } else {
+        const rest = m ? line.slice(m.index + m[0].length) : "";
+        if (m && m[1][0] === open.char && m[1].length >= open.len && rest.trim() === "") {
+          ranges.push({ start: open.start, end: lineEnd });
+          open = null;
+        }
       }
     } else if (m) {
-      open = { start: pos, char: m[1][0], len: m[1].length };
+      const quoteDepth = getQuoteDepth(line);
+      open = { start: pos, char: m[1][0], len: m[1].length, quoteDepth };
     }
     pos = lineEnd;
   }

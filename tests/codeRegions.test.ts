@@ -24,6 +24,16 @@ describe("findCodeRanges", () => {
     expect(slices(text, findCodeRanges(text))).toEqual(["> ```\n> x\n> ```\n"]);
   });
 
+  it("ends a quoted fence when the blockquote ends", () => {
+    const text = "> ```\nsome real prose\n```\nafter";
+    expect(slices(text, findCodeRanges(text))).toEqual(["> ```\n", "```\nafter"]);
+  });
+
+  it("keeps a fully-quoted fence together", () => {
+    const text = "> ```\n> x\n> ```\nafter";
+    expect(slices(text, findCodeRanges(text))).toEqual(["> ```\n> x\n> ```\n"]);
+  });
+
   it("finds inline code, matching backtick run lengths", () => {
     expect(slices("use `x` here", findCodeRanges("use `x` here"))).toEqual(["`x`"]);
     const text = "a ``b ` c`` d";
