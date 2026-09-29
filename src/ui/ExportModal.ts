@@ -81,6 +81,10 @@ export class ExportModal extends Modal {
     );
   }
 
+  private isSourceTarget(target: ExportTarget): boolean {
+    return target.kind === "vault" && target.path === this.file.path;
+  }
+
   private async chooseLocation(): Promise<void> {
     const dialog = getSaveDialog();
     if (!dialog) {
@@ -92,12 +96,21 @@ export class ExportModal extends Modal {
       filters: [{ name: "Markdown", extensions: ["md"] }],
     });
     if (result.canceled || !result.filePath) return;
-    this.target = targetFromAbsolute(this.app, result.filePath);
+    const target = targetFromAbsolute(this.app, result.filePath);
+    if (this.isSourceTarget(target)) {
+      new Notice("Can't export over the note being exported. Choose a different file name.");
+      return;
+    }
+    this.target = target;
     this.chosenViaDialog = true;
     this.render();
   }
 
   private async runExport(button: ButtonComponent): Promise<void> {
+    if (this.isSourceTarget(this.target)) {
+      new Notice("Can't export over the note being exported. Choose a different file name.");
+      return;
+    }
     button.setDisabled(true);
     try {
       const { text, warnings } = await buildExport(this.app, this.file, this.options);
