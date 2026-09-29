@@ -53,3 +53,21 @@ In `Inline playground.md`, right-click each embed. After each check, undo with
 - The command-palette entry *Inline transclusion under cursor* appears only while
   the cursor is on a note embed.
 - `Sources/Quotes.md` is unchanged after all of this.
+
+### ⋯ button (Live Preview)
+
+In `Inline playground.md`, switch to Live Preview (Reading view is out of scope
+for the ⋯ button).
+- Hovering a note embed reveals a ⋯ button immediately left of Obsidian's expand
+  icon; hovering `![[diagram.png]]` shows no ⋯ button.
+- Clicking ⋯ opens a menu without moving the cursor into the embed or opening the
+  note.
+- *Inline transclusion* from that menu works for the plain (`![[Sources/Quotes#^q1]]`),
+  callout, list-item, and mid-line (`![[Sources/Deep#^d1]] inline.`) embeds, with
+  the same results as above. One Cmd-Z undoes each.
+- On the line `See ![[Sources/Deep#^d1]] and ![[Sources/Quotes#^q1]] together.`,
+  each embed's own ⋯ button inlines that embed specifically (not the other one on
+  the line).
+- Clicking ⋯ on `![[Sources/Missing#^nope]]`, then *Inline transclusion*, shows
+  the notice "Can't inline: Sources/Missing#^nope not found", and the text is
+  unchanged.

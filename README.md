@@ -3,7 +3,7 @@
 An Obsidian plugin (desktop only) for notes that are assembled from transclusions (`![[...]]`).
 
 - **Export with transclusions expanded:** writes a new Markdown file in which every embed is replaced, recursively, by the text it points to. Use it from the command palette, or right-click a note in the file explorer and choose *Export expanded…*.
-- **Inline transclusion:** right-click an embed in the editor, or run *Inline transclusion under cursor*. This replaces that one embed with a copy of its text, which you can then edit on its own. A hidden `%% inlined from [[...]] on <date> %%` marker records where it came from. Cmd-Z undoes it.
+- **Inline transclusion:** right-click an embed in the editor, or run *Inline transclusion under cursor*. This replaces that one embed with a copy of its text, which you can then edit on its own. A hidden `%% inlined from [[...]] on <date> %%` marker records where it came from. Cmd-Z undoes it. In Live Preview, you can also use the ⋯ button next to an embed's expand icon.
 
 ## Install (team, via BRAT)
 
