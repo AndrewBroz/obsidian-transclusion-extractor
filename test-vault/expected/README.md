@@ -70,4 +70,6 @@ for the ⋯ button).
   the line).
 - Clicking ⋯ on `![[Sources/Missing#^nope]]`, then *Inline transclusion*, shows
   the notice "Can't inline: Sources/Missing#^nope not found", and the text is
-  unchanged.
+  unchanged. (If Obsidian doesn't render the missing embed as an embed box at
+  all, there may be no ⋯ button to click — use right-click or the command
+  palette instead, which cover this case regardless.)
