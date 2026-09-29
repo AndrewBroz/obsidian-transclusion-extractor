@@ -90,12 +90,17 @@ function findFencedRanges(text: string): Range[] {
   return ranges;
 }
 
-function findInlineCodeRanges(text: string, skip: Range[]): Range[] {
+/** `fenced` must be sorted and non-overlapping (as findFencedRanges returns them). */
+function findInlineCodeRanges(text: string, fenced: Range[]): Range[] {
   const ranges: Range[] = [];
+  // Run length -> position a failed search for that length stopped at; later openers before it also fail.
+  const failedUntil = new Map<number, number>();
+  let f = 0;
   let i = 0;
   while (i < text.length) {
-    const fence = skip.find((r) => i >= r.start && i < r.end);
-    if (fence) {
+    while (f < fenced.length && fenced[f].end <= i) f++;
+    const fence = fenced[f];
+    if (fence && i >= fence.start) {
       i = fence.end;
       continue;
     }
@@ -105,31 +110,50 @@ function findInlineCodeRanges(text: string, skip: Range[]): Range[] {
     }
     let n = 0;
     while (text[i + n] === "`") n++;
-    const close = findBacktickRun(text, i + n, n, skip);
-    if (close === -1) {
+    const limit = fence ? fence.start : text.length;
+    if ((failedUntil.get(n) ?? -1) > i) {
       i += n;
       continue;
     }
-    ranges.push({ start: i, end: close + n });
-    i = close + n;
+    const found = findBacktickRun(text, i + n, n, limit);
+    if (!found.ok) {
+      failedUntil.set(n, found.stop);
+      i += n;
+      continue;
+    }
+    ranges.push({ start: i, end: found.pos + n });
+    i = found.pos + n;
   }
   return ranges;
 }
 
-function findBacktickRun(text: string, from: number, n: number, skip: Range[]): number {
+/** Finds a closing run of exactly `n` backticks before `limit`, not crossing a blank line. */
+function findBacktickRun(
+  text: string,
+  from: number,
+  n: number,
+  limit: number,
+): { ok: true; pos: number } | { ok: false; stop: number } {
   let j = from;
-  while (j < text.length) {
-    if (inRanges(skip, j)) return -1;
-    if (text[j] === "`") {
+  while (j < limit) {
+    const c = text[j];
+    if (c === "`") {
       let m = 0;
       while (text[j + m] === "`") m++;
-      if (m === n) return j;
+      if (m === n) return { ok: true, pos: j };
       j += m;
+      continue;
+    }
+    if (c === "\n") {
+      let k = j + 1;
+      while (k < limit && (text[k] === " " || text[k] === "\t" || text[k] === "\r")) k++;
+      if (k >= limit || text[k] === "\n") return { ok: false, stop: k };
+      j = k;
       continue;
     }
     j++;
   }
-  return -1;
+  return { ok: false, stop: limit };
 }
 
 function indexOutside(text: string, needle: string, from: number, ranges: Range[]): number {

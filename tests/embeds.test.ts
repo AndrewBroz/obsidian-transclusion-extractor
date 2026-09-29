@@ -9,6 +9,11 @@ describe("findEmbeds", () => {
     expect(c).toMatchObject({ target: "Dir/Note#^id", linkpath: "Dir/Note", subpath: "#^id", alias: "Alias" });
   });
 
+  it("finds an embed between two stray backticks in separate paragraphs", () => {
+    const refs = findEmbeds("Press the ` key.\n\n![[Note]]\n\nThen ` again.");
+    expect(refs.map((r) => r.target)).toEqual(["Note"]);
+  });
+
   it("keeps nested heading paths in the subpath", () => {
     expect(findEmbeds("![[Note#A#B]]")[0].subpath).toBe("#A#B");
   });

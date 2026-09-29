@@ -43,6 +43,21 @@ describe("findCodeRanges", () => {
   it("ignores an unmatched backtick", () => {
     expect(findCodeRanges("a ` b")).toEqual([]);
   });
+
+  it("does not let a code span cross a blank line", () => {
+    const text = "Press the ` key.\n\n![[Note]]\n\nThen ` again.";
+    expect(findCodeRanges(text)).toEqual([]);
+  });
+
+  it("allows a code span across a soft line break", () => {
+    const text = "a `b\nc` d";
+    expect(slices(text, findCodeRanges(text))).toEqual(["`b\nc`"]);
+  });
+
+  it("finds inline code after a fence", () => {
+    const text = "```\n`x\n```\nuse `y` and `z`";
+    expect(slices(text, findCodeRanges(text))).toEqual(["```\n`x\n```\n", "`y`", "`z`"]);
+  });
 });
 
 describe("findCommentRanges", () => {
