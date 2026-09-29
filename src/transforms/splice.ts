@@ -1,5 +1,5 @@
 import { applyPrefix, parseLinePrefix, stripQuote } from "./prefix";
-import { isSingleParagraph, separators, toInline } from "./spacing";
+import { classifyLine, isSingleParagraph, separators, toInline } from "./spacing";
 
 export interface SpliceInput {
   line: string;
@@ -21,6 +21,7 @@ export interface SpliceInput {
 export function spliceEmbed({ line, start, end, content, prev, next }: SpliceInput): string[] {
   const before = line.slice(0, start);
   const after = line.slice(end);
+  if (classifyLine(line) === "table") return [before + toTableCell(content) + after];
   const prefix = after.trim() === "" ? parseLinePrefix(before) : null;
 
   if (prefix) {
@@ -56,4 +57,18 @@ export function spliceEmbed({ line, start, end, content, prev, next }: SpliceInp
     ...(sep.below ? [""] : []),
     ...(tail.trim() ? [tail] : []),
   ];
+}
+
+/** Content as one table-cell value: quote markers stripped, soft wraps joined by spaces, paragraphs by <br>. */
+function toTableCell(content: string): string {
+  const paragraphs: string[][] = [[]];
+  for (const raw of content.split("\n")) {
+    const line = raw.replace(/^[ \t]*(?:>[ \t]?)+/, "").trim();
+    if (line === "") paragraphs.push([]);
+    else paragraphs[paragraphs.length - 1].push(line);
+  }
+  return paragraphs
+    .filter((p) => p.length > 0)
+    .map((p) => p.join(" "))
+    .join("<br>");
 }

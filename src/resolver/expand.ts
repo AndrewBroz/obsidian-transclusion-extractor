@@ -2,6 +2,7 @@ import { findCodeRanges, inRanges } from "../transforms/codeRegions";
 import { blockIdOf, EmbedRef, findEmbeds } from "../transforms/embeds";
 import { splitFrontmatter } from "../transforms/frontmatter";
 import { computeShift, lastHeadingLevel, shiftHeadings } from "../transforms/headings";
+import { classifyLine } from "../transforms/spacing";
 import { spliceEmbed } from "../transforms/splice";
 import { stripBlockIds } from "../transforms/stripBlockIds";
 import { normalizeNewlines, trimBlankLines } from "../transforms/text";
@@ -48,9 +49,10 @@ async function expandText(
     const line = lines[i];
     const lineEnd = lineStart + line.length;
     const onLine = embeds.filter((e) => e.start >= lineStart && e.end <= lineEnd);
+    const inTable = classifyLine(line) === "table";
     let result = [line];
     for (const e of [...onLine].reverse()) {
-      const content = await contentFor(e, context);
+      const content = await contentFor(e, context, inTable);
       if (content === null) continue;
       const [first, ...rest] = result;
       const spliced = spliceEmbed({
@@ -69,16 +71,18 @@ async function expandText(
   }
   return out.join("\n");
 
-  async function contentFor(e: EmbedRef, contextLevel: number): Promise<string | null> {
+  async function contentFor(e: EmbedRef, contextLevel: number, inTable: boolean): Promise<string | null> {
+    // A callout would break a table row apart, so warnings in a cell are bold text instead.
+    const warning = (message: string) => (inTable ? `**${message}**` : `> [!warning] ${message}`);
     const r = await resolve(e, sourcePath);
     if (!r.ok) {
       if (r.reason === "not-markdown") return null;
       state.warnings++;
-      return `> [!warning] Missing: ${e.target}`;
+      return warning(`Missing: ${e.target}`);
     }
     if (chain.includes(r.key)) {
       state.warnings++;
-      return `> [!warning] Circular transclusion: ${e.target}`;
+      return warning(`Circular transclusion: ${e.target}`);
     }
     const raw = normalizeNewlines(r.text);
     const id = blockIdOf(e.subpath);

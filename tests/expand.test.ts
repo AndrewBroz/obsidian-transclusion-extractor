@@ -37,6 +37,14 @@ describe("expandDocument", () => {
     });
   });
 
+  it("marks a missing target inside a table cell in bold, keeping the row", async () => {
+    expect(await expand("| ![[Nope]] | b |", {})).toEqual({ text: "| **Missing: Nope** | b |", warnings: 1 });
+  });
+
+  it("marks a cycle inside a table cell in bold", async () => {
+    expect(await expand("![[A]]", { A: "| ![[A]] | b |" })).toEqual({ text: "| **Circular transclusion: A** | b |", warnings: 1 });
+  });
+
   it("marks missing targets and counts them", async () => {
     expect(await expand("A\n\n![[Nope#^x]]", {})).toEqual({ text: "A\n\n> [!warning] Missing: Nope#^x", warnings: 1 });
   });

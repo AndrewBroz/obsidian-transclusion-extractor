@@ -44,3 +44,17 @@ describe("spliceEmbed — empty content (Review Focus 5)", () => {
     expect(at("See ![[x]] now.", "")).toEqual(["See now."]);
   });
 });
+
+describe("spliceEmbed — inside a table row", () => {
+  it("joins paragraphs with <br> in a single cell", () => {
+    expect(at("| ![[x]] | b |", "p1\n\np2")).toEqual(["| p1<br>p2 | b |"]);
+  });
+
+  it("joins soft-wrapped lines with a space and strips quote markers", () => {
+    expect(at("| a | ![[x]] |", "> [!note] T\n> one\n> two\n>\n> three")).toEqual(["| a | [!note] T one two<br>three |"]);
+  });
+
+  it("never breaks out, even when the embed ends the row", () => {
+    expect(at("| a | ![[x]]", "p1\np2")).toEqual(["| a | p1 p2"]);
+  });
+});
