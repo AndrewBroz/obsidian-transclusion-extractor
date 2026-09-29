@@ -25,6 +25,19 @@ describe("loadSettings", () => {
     s.presets[0].options.provenance = true;
     expect(PUBLISH.provenance).toBe(false);
   });
+
+  it("fills saved Snapshot preset from SNAPSHOT, not PUBLISH", () => {
+    const s = loadSettings({
+      presets: [{ name: "Snapshot", options: { stripBlockIds: false, stripComments: false, shiftHeadings: true } }],
+    });
+    expect(s.presets[0].options).toEqual(SNAPSHOT);
+  });
+
+  it("loadSettings(null) returns default presets with lastPreset Publish", () => {
+    const s = loadSettings(null);
+    expect(s.presets.map((p) => p.name)).toEqual(["Publish", "Snapshot"]);
+    expect(s.lastPreset).toBe("Publish");
+  });
 });
 
 describe("uniqueName", () => {

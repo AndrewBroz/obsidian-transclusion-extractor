@@ -40,6 +40,10 @@ export const SNAPSHOT: Readonly<ExportOptions> = Object.freeze({
   provenance: false,
 });
 
+function builtInOptions(name: string): Readonly<ExportOptions> {
+  return name === "Snapshot" ? SNAPSHOT : PUBLISH;
+}
+
 export function defaultPresets(): Preset[] {
   return [
     { name: "Publish", options: { ...PUBLISH } },
@@ -51,7 +55,10 @@ export function loadSettings(data: unknown): PluginSettings {
   const saved = (data ?? {}) as { presets?: { name?: unknown; options?: Partial<ExportOptions> }[]; lastPreset?: unknown };
   const presets =
     Array.isArray(saved.presets) && saved.presets.length > 0
-      ? saved.presets.map((p) => ({ name: String(p.name ?? "Preset"), options: { ...PUBLISH, ...p.options } }))
+      ? saved.presets.map((p) => {
+          const name = String(p.name ?? "Preset");
+          return { name, options: { ...builtInOptions(name), ...p.options } };
+        })
       : defaultPresets();
   const lastPreset =
     typeof saved.lastPreset === "string" && presets.some((p) => p.name === saved.lastPreset) ? saved.lastPreset : presets[0].name;
