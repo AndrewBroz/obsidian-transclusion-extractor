@@ -45,6 +45,11 @@ describe("expandDocument", () => {
     expect(await expand("![[A]]", { A: "| ![[A]] | b |" })).toEqual({ text: "| **Circular transclusion: A** | b |", warnings: 1 });
   });
 
+  it("confines an unbalanced comment or fence to its embed", async () => {
+    expect((await expand("![[A]]\n\nAfter", { A: "Text %% oops" })).text).toBe("Text %% oops\n%%\n\nAfter");
+    expect((await expand("![[A]]\n\nAfter", { A: "```\ncode" })).text).toBe("```\ncode\n```\n\nAfter");
+  });
+
   it("marks missing targets and counts them", async () => {
     expect(await expand("A\n\n![[Nope#^x]]", {})).toEqual({ text: "A\n\n> [!warning] Missing: Nope#^x", warnings: 1 });
   });

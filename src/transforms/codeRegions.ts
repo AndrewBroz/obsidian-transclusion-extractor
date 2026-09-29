@@ -56,7 +56,17 @@ export function findProtectedRanges(text: string): Range[] {
   return mergeRanges([...code, ...findCommentRanges(text, code)]);
 }
 
+/** A fence still open at the end of the text, as a line that would close it (e.g. "> ```"), or null. */
+export function unclosedFence(text: string): string | null {
+  const open = scanFences(text).unclosed;
+  return open ? "> ".repeat(open.quoteDepth) + open.char.repeat(open.len) : null;
+}
+
 function findFencedRanges(text: string): Range[] {
+  return scanFences(text).ranges;
+}
+
+function scanFences(text: string): { ranges: Range[]; unclosed: { char: string; len: number; quoteDepth: number } | null } {
   const ranges: Range[] = [];
   let open: { start: number; char: string; len: number; quoteDepth: number } | null = null;
   let pos = 0;
@@ -87,7 +97,7 @@ function findFencedRanges(text: string): Range[] {
     pos = lineEnd;
   }
   if (open) ranges.push({ start: open.start, end: text.length });
-  return ranges;
+  return { ranges, unclosed: open };
 }
 
 /** `fenced` must be sorted and non-overlapping (as findFencedRanges returns them). */
@@ -156,7 +166,7 @@ function findBacktickRun(
   return { ok: false, stop: limit };
 }
 
-function indexOutside(text: string, needle: string, from: number, ranges: Range[]): number {
+export function indexOutside(text: string, needle: string, from: number, ranges: Range[]): number {
   let i = text.indexOf(needle, from);
   while (i !== -1 && inRanges(ranges, i)) i = text.indexOf(needle, i + 1);
   return i;

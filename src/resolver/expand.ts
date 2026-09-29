@@ -1,3 +1,4 @@
+import { balanceEmbed } from "../transforms/balance";
 import { findCodeRanges, inRanges } from "../transforms/codeRegions";
 import { blockIdOf, EmbedRef, findEmbeds } from "../transforms/embeds";
 import { splitFrontmatter } from "../transforms/frontmatter";
@@ -86,7 +87,7 @@ async function expandText(
     }
     const raw = normalizeNewlines(r.text);
     const id = blockIdOf(e.subpath);
-    const own = trimBlankLines(id ? stripBlockIds(raw, id) : raw);
+    const own = balanceEmbed(trimBlankLines(id ? stripBlockIds(raw, id) : raw));
     let content = await expandText(own, r.path, [...chain, r.key], resolve, opts, state);
     if (opts.shiftHeadings) content = shiftHeadings(content, computeShift(contextLevel, content));
     if (opts.provenance) content = `<!-- from: ${e.target} -->\n${content}\n<!-- /from -->`;
