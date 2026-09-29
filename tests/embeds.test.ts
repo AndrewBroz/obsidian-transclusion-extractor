@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { blockIdOf, embedAt, findEmbeds, looksLikeAttachment } from "../src/transforms/embeds";
+import { blockIdOf, embedAt, embedForWidget, findEmbeds, looksLikeAttachment } from "../src/transforms/embeds";
 
 describe("findEmbeds", () => {
   it("parses note, heading, block and alias forms", () => {
@@ -44,6 +44,56 @@ describe("embedAt", () => {
   });
   it("returns null outside embeds", () => {
     expect(embedAt(text, 0)).toBeNull();
+  });
+});
+
+describe("embedForWidget", () => {
+  it("finds the single embed on the line", () => {
+    const text = "before\n![[Note]]\nafter";
+    expect(embedForWidget(text, 10, null)?.target).toBe("Note");
+  });
+
+  it("picks between two embeds on a line by matching src", () => {
+    const text = "See ![[Sources/Deep#^d1]] and ![[Sources/Quotes#^q1]] together.";
+    expect(embedForWidget(text, 0, "Sources/Quotes#^q1")?.target).toBe("Sources/Quotes#^q1");
+    expect(embedForWidget(text, 0, "Sources/Deep#^d1")?.target).toBe("Sources/Deep#^d1");
+  });
+
+  it("matches src with a heading subpath", () => {
+    const text = "![[A#Head]] ![[B]]";
+    expect(embedForWidget(text, 0, "A#Head")?.target).toBe("A#Head");
+  });
+
+  it("matches src with a block subpath", () => {
+    const text = "![[A#^id]] ![[B]]";
+    expect(embedForWidget(text, 0, "A#^id")?.target).toBe("A#^id");
+  });
+
+  it("matches src against the target without the alias", () => {
+    const text = "![[Note|Alias]] ![[Other]]";
+    expect(embedForWidget(text, 0, "Note")?.target).toBe("Note");
+  });
+
+  it("returns null when the line has no embeds", () => {
+    const text = "just text\nmore text";
+    expect(embedForWidget(text, 3, null)).toBeNull();
+  });
+
+  it("falls back to the embed at or after pos when src doesn't match", () => {
+    const text = "![[A]] and ![[B]]";
+    const posNearB = text.indexOf("![[B]]");
+    expect(embedForWidget(text, posNearB, "NoSuchTarget")?.target).toBe("B");
+  });
+
+  it("returns the only embed on the line when src is not provided", () => {
+    const text = "prefix ![[Solo]] suffix";
+    expect(embedForWidget(text, 0, null)?.target).toBe("Solo");
+  });
+
+  it("falls back to the previous line when pos sits at a line boundary with no embeds", () => {
+    const text = "![[Note]]\n";
+    const boundaryPos = text.indexOf("\n");
+    expect(embedForWidget(text, boundaryPos, null)?.target).toBe("Note");
   });
 });
 

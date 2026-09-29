@@ -46,6 +46,30 @@ export function embedAt(text: string, offset: number): EmbedRef | null {
   return findEmbeds(text).find((e) => offset >= e.start && offset <= e.end) ?? null;
 }
 
+/** Embeds on the line containing `pos`, preferring a match against `src` (a DOM `src` attribute, target without alias). */
+function embedsForLine(doc: string, pos: number): EmbedRef[] {
+  const lineStart = doc.lastIndexOf("\n", pos - 1) + 1;
+  const nl = doc.indexOf("\n", lineStart);
+  const lineEnd = nl === -1 ? doc.length : nl;
+  return findEmbeds(doc).filter((e) => e.start >= lineStart && e.start < lineEnd);
+}
+
+/** Maps a rendered embed widget (as seen in the DOM) back to its source `EmbedRef`. */
+export function embedForWidget(doc: string, pos: number, src: string | null): EmbedRef | null {
+  let onLine = embedsForLine(doc, pos);
+  if (onLine.length === 0 && pos > 0) onLine = embedsForLine(doc, pos - 1);
+  if (onLine.length === 0) return null;
+
+  if (src !== null) {
+    const target = src.trim();
+    const match = onLine.find((e) => e.target === target);
+    if (match) return match;
+  }
+  if (onLine.length === 1) return onLine[0];
+
+  return onLine.find((e) => e.end >= pos) ?? onLine[onLine.length - 1];
+}
+
 export function blockIdOf(subpath: string): string | null {
   return subpath.startsWith("#^") ? subpath.slice(2) : null;
 }
