@@ -13,3 +13,25 @@
 .te-preset-option {
   padding-inline-start: 1.5em;
 }
+
+/*
+ * Obsidian positions .markdown-embed-link absolutely in the embed's top-right corner and fades
+ * it in on hover. We don't know its exact offsets (they're set in Obsidian's own app.css, not
+ * available to a community plugin at build time), so we mirror the same behavior — absolute,
+ * top-right, hidden until hover — and sit immediately to its left using the same spacing token
+ * Obsidian uses elsewhere for icon gaps.
+ */
+.markdown-embed {
+  position: relative;
+}
+
+.markdown-embed .te-embed-menu {
+  position: absolute;
+  top: var(--size-4-2);
+  right: calc(var(--icon-size) + var(--size-4-4));
+  opacity: 0;
+}
+
+.markdown-embed:hover .te-embed-menu {
+  opacity: 1;
+}
