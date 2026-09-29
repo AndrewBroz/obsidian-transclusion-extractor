@@ -23,7 +23,8 @@ export function buildInlineReplacement(input: InlineInput): string {
   const raw = normalizeNewlines(input.content);
   const content = trimBlankLines(input.blockId ? stripBlockIds(raw, input.blockId) : raw);
   const marker = `%% inlined from [[${input.target}]] on ${input.date} %%`;
-  const gap = classifyLine(content.split("\n")[0]) === "table" ? "\n" : "";
+  const firstLineKind = classifyLine(content.split("\n")[0]);
+  const gap = (firstLineKind === "table" || firstLineKind === "rule") ? "\n" : "";
   const withMarker = content === "" ? marker : `${marker}\n${gap}${content}`;
   return spliceEmbed({
     line: input.line,

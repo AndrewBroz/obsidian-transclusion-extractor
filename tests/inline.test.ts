@@ -31,4 +31,8 @@ describe("buildInlineReplacement", () => {
   it("puts a blank line between the marker and a table", () => {
     expect(build("![[N#^a]]", "| a |\n| - |", { blockId: null })).toBe(`${M}\n\n| a |\n| - |`);
   });
+
+  it("puts a blank line between the marker and a horizontal rule", () => {
+    expect(build("![[N#^a]]", "---\nAfter", { blockId: null })).toBe(`${M}\n\n---\nAfter`);
+  });
 });
