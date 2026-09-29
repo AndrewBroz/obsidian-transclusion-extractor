@@ -1,7 +1,7 @@
 import { App, CachedMetadata, resolveSubpath, TFile } from "obsidian";
 import { looksLikeAttachment } from "../transforms/embeds";
 import { stripFrontmatter } from "../transforms/frontmatter";
-import { dedentBlock, headingEndOffset, listItemEndOffset, sliceHasBlockId, sliceMatchesHeading } from "../transforms/sectionRange";
+import { blockIdMatches, dedentBlock, headingEndOffset, listItemEndOffset, sliceMatchesHeading } from "../transforms/sectionRange";
 import { normalizeNewlines, trimBlankLines } from "../transforms/text";
 import { waitForCacheChange } from "./freshness";
 import type { Resolve, ResolveResult } from "./types";
@@ -67,7 +67,7 @@ function sliceSubpath(raw: string, cache: CachedMetadata | null, subpath: string
     const nested = sub.list !== undefined && /^[ \t]*$/.test(raw.slice(lineStart, start));
     if (nested) start = lineStart;
     const slice = raw.slice(start, end);
-    if (!sliceHasBlockId(slice, sub.block.id)) return STALE;
+    if (!blockIdMatches(raw, start, end, sub.block.id)) return STALE;
     return nested ? dedentBlock(slice) : slice;
   }
   return MISSING;

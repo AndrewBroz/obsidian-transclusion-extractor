@@ -44,9 +44,21 @@ export function sliceMatchesHeading(slice: string, headingText: string): boolean
   return m !== null && m[1].trim().startsWith(headingText.trim());
 }
 
-/** Whether a slice taken at cached block offsets contains the block's ^id marker (guards stale caches). */
-export function sliceHasBlockId(slice: string, id: string): boolean {
-  return slice.includes("^" + id);
+/**
+ * Whether the block at raw[start, end) carries the ^id marker (guards stale caches).
+ * Obsidian strips a standalone `^id` line and assigns it to the previous sibling block, so
+ * blocks[id].position covers only that sibling. Accept the id either inside the cached range
+ * or on its own line immediately after it (skipping blank lines/whitespace).
+ */
+export function blockIdMatches(raw: string, start: number, end: number, id: string): boolean {
+  const marker = "^" + id;
+  if (raw.slice(start, end).includes(marker)) return true;
+
+  let i = end;
+  while (i < raw.length && /\s/.test(raw[i])) i++;
+  if (!raw.startsWith(marker, i)) return false;
+  const after = raw[i + marker.length];
+  return after === undefined || /[ \t\r\n]/.test(after);
 }
 
 /** Remove the first line's leading whitespace from the start of every line that has it. */

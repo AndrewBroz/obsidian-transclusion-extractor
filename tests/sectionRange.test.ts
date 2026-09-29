@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dedentBlock, headingEndOffset, listItemEndOffset, sliceHasBlockId, sliceMatchesHeading } from "../src/transforms/sectionRange";
+import { blockIdMatches, dedentBlock, headingEndOffset, listItemEndOffset, sliceMatchesHeading } from "../src/transforms/sectionRange";
 
 const h = (level: number, offset: number) => ({ level, position: { start: { line: 0, offset } } });
 const li = (line: number, parent: number, endOffset: number) => ({
@@ -41,10 +41,26 @@ describe("sliceMatchesHeading", () => {
   });
 });
 
-describe("sliceHasBlockId", () => {
-  it("requires the ^id marker in the slice", () => {
-    expect(sliceHasBlockId("A paragraph ^abc", "abc")).toBe(true);
-    expect(sliceHasBlockId("A paragraph", "abc")).toBe(false);
+describe("blockIdMatches", () => {
+  it("accepts the ^id marker inside the cached range", () => {
+    const raw = "A paragraph ^p1\nnext";
+    expect(blockIdMatches(raw, 0, 16, "p1")).toBe(true);
+  });
+  it("accepts an own-line ^id immediately after the cached range", () => {
+    const raw = "| table |\n\n^tbl\n";
+    expect(blockIdMatches(raw, 0, 9, "tbl")).toBe(true);
+  });
+  it("accepts an own-line ^id right after the range at end of file", () => {
+    const raw = "> quote\n^q";
+    expect(blockIdMatches(raw, 0, 7, "q")).toBe(true);
+  });
+  it("rejects a different own-line id after the range", () => {
+    const raw = "| table |\n\n^other\n";
+    expect(blockIdMatches(raw, 0, 9, "tbl")).toBe(false);
+  });
+  it("rejects an id that isn't at the start of the following line", () => {
+    const raw = "| table |\n\nText ^tbl\n";
+    expect(blockIdMatches(raw, 0, 9, "tbl")).toBe(false);
   });
 });
 
