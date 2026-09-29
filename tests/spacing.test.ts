@@ -56,6 +56,12 @@ describe("separators", () => {
     expect(separators("| a |\n| - |", { prev: "Text", next: null, inList: false })).toEqual({ above: true, below: false });
     expect(separators("- a\n- b", { prev: "Text", next: "After", inList: false })).toEqual({ above: false, below: true });
   });
+  it("separates an ordered list not starting at 1 from an adjacent paragraph", () => {
+    expect(separators("3. third\n4. fourth", { prev: "Para", next: null, inList: false })).toEqual({ above: true, below: false });
+    expect(separators("Body", { prev: null, next: "3) third", inList: false })).toEqual({ above: false, below: true });
+    expect(separators("1. first", { prev: "Para", next: null, inList: false })).toEqual({ above: false, below: false });
+    expect(separators("- a", { prev: null, next: "3. third", inList: false })).toEqual({ above: false, below: false });
+  });
 });
 
 describe("inline helpers", () => {

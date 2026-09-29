@@ -1,4 +1,4 @@
-import { classifyLine } from "./spacing";
+import { classifyLine, isOrderedNotOne } from "./spacing";
 import { spliceEmbed } from "./splice";
 import { stripBlockIds } from "./stripBlockIds";
 import { normalizeNewlines, trimBlankLines } from "./text";
@@ -23,8 +23,9 @@ export function buildInlineReplacement(input: InlineInput): string {
   const raw = normalizeNewlines(input.content);
   const content = trimBlankLines(input.blockId ? stripBlockIds(raw, input.blockId) : raw);
   const marker = `%% inlined from [[${input.target}]] on ${input.date} %%`;
-  const firstLineKind = classifyLine(content.split("\n")[0]);
-  const gap = (firstLineKind === "table" || firstLineKind === "rule") ? "\n" : "";
+  const firstLine = content.split("\n")[0];
+  const firstLineKind = classifyLine(firstLine);
+  const gap = (firstLineKind === "table" || firstLineKind === "rule" || isOrderedNotOne(firstLine)) ? "\n" : "";
   const withMarker = content === "" ? marker : `${marker}\n${gap}${content}`;
   return spliceEmbed({
     line: input.line,

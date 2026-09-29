@@ -35,4 +35,9 @@ describe("buildInlineReplacement", () => {
   it("puts a blank line between the marker and a horizontal rule", () => {
     expect(build("![[N#^a]]", "---\nAfter", { blockId: null })).toBe(`${M}\n\n---\nAfter`);
   });
+
+  it("puts a blank line between the marker and an ordered list not starting at 1", () => {
+    expect(build("![[N#^a]]", "3. third\n4. fourth", { blockId: null })).toBe(`${M}\n\n3. third\n4. fourth`);
+    expect(build("![[N#^a]]", "1. first", { blockId: null })).toBe(`${M}\n1. first`);
+  });
 });

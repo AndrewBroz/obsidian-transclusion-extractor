@@ -34,10 +34,17 @@ export interface JoinContext {
 export function separators(content: string, ctx: JoinContext): { above: boolean; below: boolean } {
   if (ctx.inList) return { above: false, below: false };
   const lines = content.split("\n");
+  const last = lines[lines.length - 1];
   return {
-    above: wouldMerge(classifyLine(ctx.prev), classifyLine(lines[0])),
-    below: wouldMerge(classifyLine(lines[lines.length - 1]), classifyLine(ctx.next)),
+    above: wouldMerge(classifyLine(ctx.prev), classifyLine(lines[0])) || (classifyLine(ctx.prev) === "paragraph" && isOrderedNotOne(lines[0])),
+    below: wouldMerge(classifyLine(last), classifyLine(ctx.next)) || (classifyLine(last) === "paragraph" && isOrderedNotOne(ctx.next)),
   };
+}
+
+/** An ordered-list line numbered other than 1, which cannot interrupt a paragraph (it would become paragraph text). */
+export function isOrderedNotOne(line: string | null): boolean {
+  const m = line === null ? null : /^[ \t]*(\d+)[.)][ \t]/.exec(line);
+  return m !== null && Number(m[1]) !== 1;
 }
 
 export function isSingleParagraph(content: string): boolean {
