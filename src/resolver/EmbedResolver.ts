@@ -1,7 +1,7 @@
 import { App, CachedMetadata, resolveSubpath, TFile } from "obsidian";
 import { looksLikeAttachment } from "../transforms/embeds";
 import { stripFrontmatter } from "../transforms/frontmatter";
-import { headingEndOffset, listItemEndOffset, sliceHasBlockId, sliceMatchesHeading } from "../transforms/sectionRange";
+import { dedentBlock, headingEndOffset, listItemEndOffset, sliceHasBlockId, sliceMatchesHeading } from "../transforms/sectionRange";
 import { normalizeNewlines, trimBlankLines } from "../transforms/text";
 import { waitForCacheChange } from "./freshness";
 import type { Resolve, ResolveResult } from "./types";
@@ -59,11 +59,16 @@ function sliceSubpath(raw: string, cache: CachedMetadata | null, subpath: string
     return sliceMatchesHeading(slice, sub.current.heading) ? slice : STALE;
   }
   if (sub.type === "block") {
-    const start = sub.block.position.start.offset;
+    let start = sub.block.position.start.offset;
     let end = sub.block.position.end.offset;
     if (sub.list && cache.listItems) end = Math.max(end, listItemEndOffset(cache.listItems, sub.list.position.start.line));
+    // A list item: take its whole line, then dedent so a nested item's children keep their relative nesting.
+    const lineStart = raw.lastIndexOf("\n", start - 1) + 1;
+    const nested = sub.list !== undefined && /^[ \t]*$/.test(raw.slice(lineStart, start));
+    if (nested) start = lineStart;
     const slice = raw.slice(start, end);
-    return sliceHasBlockId(slice, sub.block.id) ? slice : STALE;
+    if (!sliceHasBlockId(slice, sub.block.id)) return STALE;
+    return nested ? dedentBlock(slice) : slice;
   }
   return MISSING;
 }

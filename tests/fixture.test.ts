@@ -8,6 +8,7 @@ import { looksLikeAttachment } from "../src/transforms/embeds";
 import { stripFrontmatter } from "../src/transforms/frontmatter";
 import { PUBLISH, SNAPSHOT } from "../src/settings";
 import { runPipeline } from "../src/transforms/pipeline";
+import { dedentBlock } from "../src/transforms/sectionRange";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const VAULT = join(HERE, "..", "test-vault");
@@ -134,5 +135,19 @@ describe("fixture vault", () => {
     const expected = readFileSync(join(VAULT, "expected", "Assembled (Snapshot).md"), "utf8");
     expect(out).toBe(expected);
     expect(warnings).toBe(2);
+  });
+});
+
+describe("fixture vault: nested list-item block", () => {
+  it("dedents a nested list item and its children", async () => {
+    const base = fixtureResolve();
+    const resolve: Resolve = async (ref, sourcePath) => {
+      const r = await base(ref, sourcePath);
+      return r.ok && ref.subpath.startsWith("#^") ? { ...r, text: dedentBlock(r.text) } : r;
+    };
+    const source = "![[Sources/Nested list#^ci]]";
+    const { text, warnings } = await expandDocument(source, "Assembled.md", resolve, { shiftHeadings: false, provenance: false });
+    expect(text).toBe("- Child item\n\t- Grandchild");
+    expect(warnings).toBe(0);
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { headingEndOffset, listItemEndOffset, sliceHasBlockId, sliceMatchesHeading } from "../src/transforms/sectionRange";
+import { dedentBlock, headingEndOffset, listItemEndOffset, sliceHasBlockId, sliceMatchesHeading } from "../src/transforms/sectionRange";
 
 const h = (level: number, offset: number) => ({ level, position: { start: { line: 0, offset } } });
 const li = (line: number, parent: number, endOffset: number) => ({
@@ -45,5 +45,16 @@ describe("sliceHasBlockId", () => {
   it("requires the ^id marker in the slice", () => {
     expect(sliceHasBlockId("A paragraph ^abc", "abc")).toBe(true);
     expect(sliceHasBlockId("A paragraph", "abc")).toBe(false);
+  });
+});
+
+describe("dedentBlock", () => {
+  it("removes the first line's indentation from every line", () => {
+    expect(dedentBlock("\t- child ^id\n\t\t- grandchild")).toBe("- child ^id\n\t- grandchild");
+    expect(dedentBlock("  - a\n    - b")).toBe("- a\n  - b");
+  });
+  it("leaves lines without that indentation alone", () => {
+    expect(dedentBlock("- a\n  - b")).toBe("- a\n  - b");
+    expect(dedentBlock("  - a\n\n x")).toBe("- a\n\n x");
   });
 });

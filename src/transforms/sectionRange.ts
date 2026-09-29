@@ -48,3 +48,13 @@ export function sliceMatchesHeading(slice: string, headingText: string): boolean
 export function sliceHasBlockId(slice: string, id: string): boolean {
   return slice.includes("^" + id);
 }
+
+/** Remove the first line's leading whitespace from the start of every line that has it. */
+export function dedentBlock(slice: string): string {
+  const indent = /^[ \t]*/.exec(slice)![0];
+  if (indent === "") return slice;
+  return slice
+    .split("\n")
+    .map((line) => (line.startsWith(indent) ? line.slice(indent.length) : line))
+    .join("\n");
+}
