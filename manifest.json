@@ -1,7 +1,7 @@
 {
 	"id": "transclusion-extractor",
 	"name": "Transclusion Extractor",
-	"version": "0.1.1",
+	"version": "0.2.0",
 	"minAppVersion": "1.5.0",
 	"description": "Export notes built from transclusions with every embed expanded, or inline a single transclusion for separate editing.",
 	"author": "Andrew Broz",
