@@ -2,6 +2,7 @@ import { classifyLine, isOrderedNotOne } from "./spacing";
 import { spliceEmbed } from "./splice";
 import { stripBlockIds } from "./stripBlockIds";
 import { normalizeNewlines, trimBlankLines } from "./text";
+import { formatInlineMarker } from "./inlineMarker";
 
 export interface InlineInput {
   line: string;
@@ -22,7 +23,7 @@ export interface InlineInput {
 export function buildInlineReplacement(input: InlineInput): string {
   const raw = normalizeNewlines(input.content);
   const content = trimBlankLines(input.blockId ? stripBlockIds(raw, input.blockId) : raw);
-  const marker = `%% inlined from [[${input.target}]] on ${input.date} %%`;
+  const marker = formatInlineMarker(input.target, input.date);
   const firstLine = content.split("\n")[0];
   const firstLineKind = classifyLine(firstLine);
   const gap = (firstLineKind === "table" || firstLineKind === "rule" || isOrderedNotOne(firstLine)) ? "\n" : "";

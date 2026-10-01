@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildInlineReplacement, InlineInput } from "../src/transforms/inline";
 
-const M = "%% inlined from [[N#^a]] on 2026-09-29 %%";
+const M = '<!-- inlined from "N#^a" on 2026-09-29 -->';
 
 function build(line: string, content: string, extra: Partial<InlineInput> = {}): string {
   const start = line.indexOf("![[");
