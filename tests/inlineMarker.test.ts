@@ -18,10 +18,13 @@ describe("formatInlineMarker", () => {
 describe("INLINE_MARKER_RE", () => {
   it("matches produced markers, including escaped quotes", () => {
     const text = `a ${formatInlineMarker('X "y"', "2026-09-30")} b ${formatInlineMarker("Z", "2026-10-01")}`;
-    expect([...text.matchAll(INLINE_MARKER_RE)].length).toBe(2);
+    expect([...text.matchAll(new RegExp(INLINE_MARKER_RE.source, "g"))].length).toBe(2);
   });
   it("does not match other HTML comments", () => {
-    expect([..."<!-- from: N#^a --> <!-- note -->".matchAll(INLINE_MARKER_RE)].length).toBe(0);
+    expect([..."<!-- from: N#^a --> <!-- note -->".matchAll(new RegExp(INLINE_MARKER_RE.source, "g"))].length).toBe(0);
+  });
+  it("has no global flag of its own", () => {
+    expect(INLINE_MARKER_RE.global).toBe(false);
   });
 });
 
