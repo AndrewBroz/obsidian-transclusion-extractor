@@ -46,7 +46,7 @@ In `Inline playground.md`, right-click each embed. After each check, undo with
 - The list embed becomes `- <!-- inlined … -->` followed by `  - Main point`,
   `    - Supporting detail` and `    - Another detail`.
 - The mid-line embed becomes
-  `See <!-- inlined from "Sources/Deep#^d1" on <today> --> Deepest paragraph. inline.`
+  `See Deepest paragraph. <!-- inlined from "Sources/Deep#^d1" on <today> --> inline.`
 - The missing embed shows the notice "Can't inline: Sources/Missing#^nope not found",
   and the text is unchanged.
 - `![[diagram.png]]` shows no *Inline transclusion* menu item.

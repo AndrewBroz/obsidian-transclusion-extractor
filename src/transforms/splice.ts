@@ -15,6 +15,22 @@ export interface SpliceInput {
 }
 
 /**
+ * True when spliceEmbed, given the same `line`/`start`/`end`/`content`, would take its single-paragraph
+ * mid-line branch (content spliced directly into the surrounding text rather than placed as its own
+ * block). Callers that need to place something (e.g. a provenance marker) relative to the content,
+ * rather than always above it, use this to mirror spliceEmbed's placement decision.
+ */
+export function willSpliceInline(line: string, start: number, end: number, content: string): boolean {
+  const before = line.slice(0, start);
+  const after = line.slice(end);
+  if (classifyLine(line) === "table") return false;
+  const prefix = after.trim() === "" ? parseLinePrefix(before) : null;
+  if (prefix) return false;
+  if (content.trim() === "") return false;
+  return isSingleParagraph(content);
+}
+
+/**
  * Replace the embed at line[start, end) with `content`, returning the lines that replace `line`.
  * Text before the embed always lands in the first returned line.
  */

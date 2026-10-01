@@ -1,5 +1,5 @@
 import { classifyLine, isOrderedNotOne } from "./spacing";
-import { spliceEmbed } from "./splice";
+import { spliceEmbed, willSpliceInline } from "./splice";
 import { stripBlockIds } from "./stripBlockIds";
 import { normalizeNewlines, trimBlankLines } from "./text";
 import { formatInlineMarker } from "./inlineMarker";
@@ -27,7 +27,11 @@ export function buildInlineReplacement(input: InlineInput): string {
   const firstLine = content.split("\n")[0];
   const firstLineKind = classifyLine(firstLine);
   const gap = (firstLineKind === "table" || firstLineKind === "rule" || isOrderedNotOne(firstLine)) ? "\n" : "";
-  const withMarker = content === "" ? marker : `${marker}\n${gap}${content}`;
+  // When the content will be spliced directly into the surrounding line (a single paragraph, mid-line),
+  // a marker placed before it would start the output with `<!--`, which CommonMark reads as an HTML
+  // block and leaves the rest of the line unrendered. Put the marker after the content instead.
+  const inline = content !== "" && willSpliceInline(input.line, input.start, input.end, content);
+  const withMarker = content === "" ? marker : inline ? `${content} ${marker}` : `${marker}\n${gap}${content}`;
   return spliceEmbed({
     line: input.line,
     start: input.start,
