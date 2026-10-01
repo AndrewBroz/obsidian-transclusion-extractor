@@ -58,6 +58,9 @@ export async function inlineEmbed(
 
   const filtered = applyFilters(result.text, getContentFilters(app));
   if (filtered.failures.length > 0) new Notice("Inkling couldn't clean this transclusion; inlined as-is.");
+  if (filtered.text.trim() === "") {
+    new Notice("The original text of this transclusion is empty; only the marker was inserted.");
+  }
 
   const replacement = buildInlineReplacement({
     line: lineText,
