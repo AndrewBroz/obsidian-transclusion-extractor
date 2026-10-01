@@ -1,6 +1,7 @@
 export interface ExportOptions {
   stripBlockIds: boolean;
   stripComments: boolean;
+  stripInlineMarkers: boolean;
   keepParentFrontmatter: boolean;
   shiftHeadings: boolean;
   provenance: boolean;
@@ -19,6 +20,7 @@ export interface PluginSettings {
 export const OPTION_KEYS: (keyof ExportOptions)[] = [
   "stripBlockIds",
   "stripComments",
+  "stripInlineMarkers",
   "keepParentFrontmatter",
   "shiftHeadings",
   "provenance",
@@ -27,6 +29,7 @@ export const OPTION_KEYS: (keyof ExportOptions)[] = [
 export const PUBLISH: Readonly<ExportOptions> = Object.freeze({
   stripBlockIds: true,
   stripComments: true,
+  stripInlineMarkers: true,
   keepParentFrontmatter: false,
   shiftHeadings: true,
   provenance: false,
@@ -35,6 +38,7 @@ export const PUBLISH: Readonly<ExportOptions> = Object.freeze({
 export const SNAPSHOT: Readonly<ExportOptions> = Object.freeze({
   stripBlockIds: false,
   stripComments: false,
+  stripInlineMarkers: false,
   keepParentFrontmatter: true,
   shiftHeadings: true,
   provenance: false,

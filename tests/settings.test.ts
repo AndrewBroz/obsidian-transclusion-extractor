@@ -38,6 +38,17 @@ describe("loadSettings", () => {
     expect(s.presets.map((p) => p.name)).toEqual(["Publish", "Snapshot"]);
     expect(s.lastPreset).toBe("Publish");
   });
+
+  it("back-fills stripInlineMarkers from the matching built-in preset", () => {
+    const s = loadSettings({
+      presets: [
+        { name: "Publish", options: { stripBlockIds: true } },
+        { name: "Snapshot", options: { stripBlockIds: false } },
+      ],
+    });
+    expect(s.presets[0].options.stripInlineMarkers).toBe(true);
+    expect(s.presets[1].options.stripInlineMarkers).toBe(false);
+  });
 });
 
 describe("uniqueName", () => {

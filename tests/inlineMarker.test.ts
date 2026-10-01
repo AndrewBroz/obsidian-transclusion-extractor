@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatInlineMarker, INLINE_MARKER_RE } from "../src/transforms/inlineMarker";
+import { formatInlineMarker, INLINE_MARKER_RE, stripInlineMarkers } from "../src/transforms/inlineMarker";
 
 describe("formatInlineMarker", () => {
   it("writes an HTML comment with a quoted target", () => {
@@ -22,5 +22,22 @@ describe("INLINE_MARKER_RE", () => {
   });
   it("does not match other HTML comments", () => {
     expect([..."<!-- from: N#^a --> <!-- note -->".matchAll(INLINE_MARKER_RE)].length).toBe(0);
+  });
+});
+
+describe("stripInlineMarkers", () => {
+  const M = '<!-- inlined from "N#^a" on 2026-09-30 -->';
+  it("removes a marker line and keeps the content", () => {
+    expect(stripInlineMarkers(`Intro\n\n${M}\nHello\n\nEnd`)).toBe("Intro\n\nHello\n\nEnd");
+  });
+  it("removes an inline marker without a double space", () => {
+    expect(stripInlineMarkers(`See ${M} Hello now`)).toBe("See Hello now");
+  });
+  it("removes a marker inside a quote", () => {
+    expect(stripInlineMarkers(`> ${M}\n> Hello`)).toBe("> Hello");
+  });
+  it("leaves other HTML comments and code alone (Review Focus 3)", () => {
+    const text = "<!-- from: N#^a -->\nHello\n<!-- /from -->\n```\n" + M + "\n```";
+    expect(stripInlineMarkers(text)).toBe(text);
   });
 });
