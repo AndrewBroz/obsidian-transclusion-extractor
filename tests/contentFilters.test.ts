@@ -66,6 +66,23 @@ describe("applyFilters — code protection", () => {
     const r = applyFilters("{++a++} and {++b++}", [stripAdditions]);
     expect(r).toEqual({ text: " and ", failures: [] });
   });
+
+  const identity: NamedFilter = { name: "id", filter: (s) => s };
+
+  it("round-trips code containing a literal <1> through an identity filter", () => {
+    const text = "```cpp\nauto y = std::get<1>(t);\n```\n\nUse `x` here.";
+    expect(applyFilters(text, [identity])).toEqual({ text, failures: [] });
+  });
+
+  it("round-trips prose containing a literal <0> through an identity filter", () => {
+    const text = "Press <0> then `run`.";
+    expect(applyFilters(text, [identity])).toEqual({ text, failures: [] });
+  });
+
+  it("skips masking entirely when the text already contains a placeholder character", () => {
+    const text = "weird text with `code`";
+    expect(applyFilters(text, [identity])).toEqual({ text, failures: [] });
+  });
 });
 
 describe("composeFilters", () => {
