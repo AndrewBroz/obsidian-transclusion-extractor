@@ -1,6 +1,7 @@
 export interface ExportOptions {
   stripBlockIds: boolean;
   stripComments: boolean;
+  stripInlineMarkers: boolean;
   keepParentFrontmatter: boolean;
   shiftHeadings: boolean;
   provenance: boolean;
@@ -19,6 +20,7 @@ export interface PluginSettings {
 export const OPTION_KEYS: (keyof ExportOptions)[] = [
   "stripBlockIds",
   "stripComments",
+  "stripInlineMarkers",
   "keepParentFrontmatter",
   "shiftHeadings",
   "provenance",
@@ -27,6 +29,7 @@ export const OPTION_KEYS: (keyof ExportOptions)[] = [
 export const PUBLISH: Readonly<ExportOptions> = Object.freeze({
   stripBlockIds: true,
   stripComments: true,
+  stripInlineMarkers: true,
   keepParentFrontmatter: false,
   shiftHeadings: true,
   provenance: false,
@@ -35,6 +38,7 @@ export const PUBLISH: Readonly<ExportOptions> = Object.freeze({
 export const SNAPSHOT: Readonly<ExportOptions> = Object.freeze({
   stripBlockIds: false,
   stripComments: false,
+  stripInlineMarkers: false,
   keepParentFrontmatter: true,
   shiftHeadings: true,
   provenance: false,
@@ -57,7 +61,10 @@ export function loadSettings(data: unknown): PluginSettings {
     Array.isArray(saved.presets) && saved.presets.length > 0
       ? saved.presets.map((p) => {
           const name = String(p.name ?? "Preset");
-          return { name, options: { ...builtInOptions(name), ...p.options } };
+          const builtin = builtInOptions(name);
+          const savedOptions = p.options ?? {};
+          const stripInlineMarkers = savedOptions.stripInlineMarkers ?? savedOptions.stripComments ?? builtin.stripInlineMarkers;
+          return { name, options: { ...builtin, ...savedOptions, stripInlineMarkers } };
         })
       : defaultPresets();
   const lastPreset =

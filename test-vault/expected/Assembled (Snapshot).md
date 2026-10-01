@@ -42,9 +42,9 @@ A says hi.
 
 B says hi.
 
-> [!warning] Circular transclusion: Loop A
+> **Circular transclusion:** Loop A
 
-> [!warning] Missing: Sources/Missing#^nope
+> **Missing:** Sources/Missing#^nope
 
 ![[diagram.png]]
 

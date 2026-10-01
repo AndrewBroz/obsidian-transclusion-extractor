@@ -38,6 +38,31 @@ describe("loadSettings", () => {
     expect(s.presets.map((p) => p.name)).toEqual(["Publish", "Snapshot"]);
     expect(s.lastPreset).toBe("Publish");
   });
+
+  it("back-fills stripInlineMarkers from the matching built-in preset", () => {
+    const s = loadSettings({
+      presets: [
+        { name: "Publish", options: { stripBlockIds: true } },
+        { name: "Snapshot", options: { stripBlockIds: false } },
+      ],
+    });
+    expect(s.presets[0].options.stripInlineMarkers).toBe(true);
+    expect(s.presets[1].options.stripInlineMarkers).toBe(false);
+  });
+
+  it("back-fills a custom preset's stripInlineMarkers from its own stripComments", () => {
+    const s = loadSettings({
+      presets: [{ name: "Archive", options: { stripComments: false } }],
+    });
+    expect(s.presets[0].options.stripInlineMarkers).toBe(false);
+  });
+
+  it("back-fills a custom preset's stripInlineMarkers from its own stripComments (true)", () => {
+    const s = loadSettings({
+      presets: [{ name: "Mine", options: { stripComments: true } }],
+    });
+    expect(s.presets[0].options.stripInlineMarkers).toBe(true);
+  });
 });
 
 describe("uniqueName", () => {

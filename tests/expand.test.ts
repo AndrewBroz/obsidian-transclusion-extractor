@@ -32,7 +32,7 @@ describe("expandDocument", () => {
   it("stops at cycles with a warning callout", async () => {
     const files = { A: "A text\n\n![[B]]", B: "B text\n\n![[A]]" };
     expect(await expand("![[A]]", files)).toEqual({
-      text: "A text\n\nB text\n\n> [!warning] Circular transclusion: A",
+      text: "A text\n\nB text\n\n> **Circular transclusion:** A",
       warnings: 1,
     });
   });
@@ -51,7 +51,7 @@ describe("expandDocument", () => {
   });
 
   it("marks missing targets and counts them", async () => {
-    expect(await expand("A\n\n![[Nope#^x]]", {})).toEqual({ text: "A\n\n> [!warning] Missing: Nope#^x", warnings: 1 });
+    expect(await expand("A\n\n![[Nope#^x]]", {})).toEqual({ text: "A\n\n> **Missing:** Nope#^x", warnings: 1 });
   });
 
   it("leaves non-note embeds verbatim", async () => {
@@ -92,5 +92,41 @@ describe("expandDocument", () => {
   it("expands several embeds on one line", async () => {
     const files = { "N#^a": "Hello ^a", "N#^b": "World ^b" };
     expect((await expand("![[N#^a]] and ![[N#^b]]", files)).text).toBe("Hello and World");
+  });
+
+  const dropAdditions = (md: string) => ({ text: md.replace(/\{\+\+[\s\S]*?\+\+\}/g, ""), failures: [] as string[] });
+
+  it("filters the parent document before expanding", async () => {
+    const r = await expandDocument("Keep {++x++}this", "Root", fakeResolve({}), { ...OPTS, filter: dropAdditions });
+    expect(r).toEqual({ text: "Keep this", warnings: 0 });
+  });
+
+  it("filters each embed's text", async () => {
+    const r = await expandDocument("![[N#^a]]", "Root", fakeResolve({ "N#^a": "Hello {++big ++}world ^a" }), { ...OPTS, filter: dropAdditions });
+    expect(r.text).toBe("Hello world");
+  });
+
+  it("does not resolve an embed removed by the filter (Review Focus 5)", async () => {
+    const seen: string[] = [];
+    const base = fakeResolve({ "N#^a": "Hello ^a" });
+    const resolve: Resolve = async (ref, src) => (seen.push(ref.target), base(ref, src));
+    const r = await expandDocument("A {++![[N#^a]]++}B", "Root", resolve, { ...OPTS, filter: dropAdditions });
+    expect(r.text).toBe("A B");
+    expect(seen).toEqual([]);
+  });
+
+  it("reports a failing filter as a warning and keeps the unfiltered text (Review Focus 4)", async () => {
+    const failing = (md: string) => ({ text: md, failures: ["inkling"] });
+    const r = await expandDocument("![[N#^a]]", "Root", fakeResolve({ "N#^a": "Hello ^a" }), { ...OPTS, filter: failing });
+    expect(r).toEqual({
+      text: "> **Filter failed (inkling):** document\n\n> **Filter failed (inkling):** N#^a\n\nHello",
+      warnings: 2,
+    });
+  });
+
+  it("renders a filter failure inside a table row as bold text", async () => {
+    const failing = (md: string) => ({ text: md, failures: ["inkling"] });
+    const r = await expandDocument("x\n\n| ![[N#^a]] | b |", "Root", fakeResolve({ "N#^a": "Hello ^a" }), { ...OPTS, filter: (md) => (md.startsWith("x") ? { text: md, failures: [] } : failing(md)) });
+    expect(r.text).toBe("x\n\n| **Filter failed (inkling): N#^a** Hello | b |");
   });
 });

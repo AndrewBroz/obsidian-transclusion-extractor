@@ -16,3 +16,7 @@ See ![[Sources/Deep#^d1]] and ![[Sources/Quotes#^q1]] together.
 ![[Sources/Missing#^nope]]
 
 ![[diagram.png]]
+
+![[Sources/Reviewed#^r1]]
+
+![[Sources/Reviewed]]

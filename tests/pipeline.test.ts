@@ -26,3 +26,15 @@ describe("runPipeline", () => {
     expect(runPipeline(input, SNAPSHOT)).toBe(input);
   });
 });
+
+describe("inline markers", () => {
+  const M = '<!-- inlined from "N#^a" on 2026-09-30 -->';
+  it("Publish strips new and legacy inline markers (Review Focus 2)", () => {
+    const text = `${M}\nNew\n\n%% inlined from [[Old#^b]] on 2026-09-29 %%\nOld\n`;
+    expect(runPipeline(text, PUBLISH)).toBe("New\n\nOld\n");
+  });
+  it("Snapshot keeps them", () => {
+    const text = `${M}\nNew\n`;
+    expect(runPipeline(text, SNAPSHOT)).toBe(text);
+  });
+});

@@ -1,7 +1,8 @@
 import { classifyLine, isOrderedNotOne } from "./spacing";
-import { spliceEmbed } from "./splice";
+import { spliceEmbed, willSpliceInline } from "./splice";
 import { stripBlockIds } from "./stripBlockIds";
 import { normalizeNewlines, trimBlankLines } from "./text";
+import { formatInlineMarker } from "./inlineMarker";
 
 export interface InlineInput {
   line: string;
@@ -22,11 +23,15 @@ export interface InlineInput {
 export function buildInlineReplacement(input: InlineInput): string {
   const raw = normalizeNewlines(input.content);
   const content = trimBlankLines(input.blockId ? stripBlockIds(raw, input.blockId) : raw);
-  const marker = `%% inlined from [[${input.target}]] on ${input.date} %%`;
+  const marker = formatInlineMarker(input.target, input.date);
   const firstLine = content.split("\n")[0];
   const firstLineKind = classifyLine(firstLine);
   const gap = (firstLineKind === "table" || firstLineKind === "rule" || isOrderedNotOne(firstLine)) ? "\n" : "";
-  const withMarker = content === "" ? marker : `${marker}\n${gap}${content}`;
+  // When the content will be spliced directly into the surrounding line (a single paragraph, mid-line),
+  // a marker placed before it would start the output with `<!--`, which CommonMark reads as an HTML
+  // block and leaves the rest of the line unrendered. Put the marker after the content instead.
+  const inline = content !== "" && willSpliceInline(input.line, input.start, input.end, content);
+  const withMarker = content === "" ? marker : inline ? `${content} ${marker}` : `${marker}\n${gap}${content}`;
   return spliceEmbed({
     line: input.line,
     start: input.start,

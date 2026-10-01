@@ -1,3 +1,4 @@
+import type { FilterResult } from "../filters/contentFilters";
 import { balanceEmbed } from "../transforms/balance";
 import { findCodeRanges, inRanges } from "../transforms/codeRegions";
 import { blockIdOf, EmbedRef, findEmbeds } from "../transforms/embeds";
@@ -12,6 +13,7 @@ import type { Resolve } from "./types";
 export interface ExpandOptions {
   shiftHeadings: boolean;
   provenance: boolean;
+  filter?: (markdown: string) => FilterResult;
 }
 
 export interface ExpandResult {
@@ -26,8 +28,16 @@ interface State {
 export async function expandDocument(text: string, sourcePath: string, resolve: Resolve, opts: ExpandOptions): Promise<ExpandResult> {
   const { frontmatter, body } = splitFrontmatter(normalizeNewlines(text));
   const state: State = { warnings: 0 };
-  const expanded = await expandText(body, sourcePath, [sourcePath], resolve, opts, state);
-  return { text: frontmatter + expanded, warnings: state.warnings };
+  let own = body;
+  let notes = "";
+  if (opts.filter) {
+    const filtered = opts.filter(body);
+    own = filtered.text;
+    state.warnings += filtered.failures.length;
+    notes = filtered.failures.map((name) => `> **Filter failed (${name}):** document\n\n`).join("");
+  }
+  const expanded = await expandText(own, sourcePath, [sourcePath], resolve, opts, state);
+  return { text: frontmatter + notes + expanded, warnings: state.warnings };
 }
 
 async function expandText(
@@ -73,24 +83,33 @@ async function expandText(
   return out.join("\n");
 
   async function contentFor(e: EmbedRef, contextLevel: number, inTable: boolean): Promise<string | null> {
-    // A callout would break a table row apart, so warnings in a cell are bold text instead.
-    const warning = (message: string) => (inTable ? `**${message}**` : `> [!warning] ${message}`);
+    // Plain Markdown that renders anywhere; inside a table row a blockquote would break the row.
+    const warning = (label: string, target: string) =>
+      inTable ? `**${label}: ${target}**` : `> **${label}:** ${target}`;
     const r = await resolve(e, sourcePath);
     if (!r.ok) {
       if (r.reason === "not-markdown") return null;
       state.warnings++;
-      return warning(`Missing: ${e.target}`);
+      return warning("Missing", e.target);
     }
     if (chain.includes(r.key)) {
       state.warnings++;
-      return warning(`Circular transclusion: ${e.target}`);
+      return warning("Circular transclusion", e.target);
     }
-    const raw = normalizeNewlines(r.text);
+    let raw = normalizeNewlines(r.text);
+    let failureNotes: string[] = [];
+    if (opts.filter) {
+      const filtered = opts.filter(raw);
+      raw = filtered.text;
+      state.warnings += filtered.failures.length;
+      failureNotes = filtered.failures.map((name) => warning(`Filter failed (${name})`, e.target));
+    }
     const id = blockIdOf(e.subpath);
     const own = balanceEmbed(trimBlankLines(id ? stripBlockIds(raw, id) : raw));
     let content = await expandText(own, r.path, [...chain, r.key], resolve, opts, state);
     if (opts.shiftHeadings) content = shiftHeadings(content, computeShift(contextLevel, content));
     if (opts.provenance) content = `<!-- from: ${e.target} -->\n${content}\n<!-- /from -->`;
+    if (failureNotes.length > 0) content = [...failureNotes, content].join(inTable ? " " : "\n\n");
     return content;
   }
 }

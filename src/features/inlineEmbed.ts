@@ -1,4 +1,5 @@
 import { App, Editor, moment, Notice, TFile } from "obsidian";
+import { applyFilters, getContentFilters } from "../filters/contentFilters";
 import { createResolver } from "../resolver/EmbedResolver";
 import { flushEditors } from "../resolver/freshness";
 import { blockIdOf, embedAt, EmbedRef, looksLikeAttachment } from "../transforms/embeds";
@@ -55,13 +56,19 @@ export async function inlineEmbed(
     return;
   }
 
+  const filtered = applyFilters(result.text, getContentFilters(app));
+  if (filtered.failures.length > 0) new Notice("Inkling couldn't clean this transclusion; inlined as-is.");
+  if (filtered.text.trim() === "") {
+    new Notice("The original text of this transclusion is empty; only the marker was inserted.");
+  }
+
   const replacement = buildInlineReplacement({
     line: lineText,
     start: hit.ref.start - hit.lineStart,
     end: hit.ref.end - hit.lineStart,
     target: hit.ref.target,
     blockId: blockIdOf(hit.ref.subpath),
-    content: result.text,
+    content: filtered.text,
     // Obsidian's `moment` re-export types as a namespace without a call signature under TS 7 +
     // esModuleInterop, even though it is callable at runtime (moment.d.ts uses `export = moment`
     // on a callable function/namespace). Cast to call it; behavior is unaffected.
