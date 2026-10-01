@@ -73,17 +73,18 @@ async function expandText(
   return out.join("\n");
 
   async function contentFor(e: EmbedRef, contextLevel: number, inTable: boolean): Promise<string | null> {
-    // A callout would break a table row apart, so warnings in a cell are bold text instead.
-    const warning = (message: string) => (inTable ? `**${message}**` : `> [!warning] ${message}`);
+    // Plain Markdown that renders anywhere; inside a table row a blockquote would break the row.
+    const warning = (label: string, target: string) =>
+      inTable ? `**${label}: ${target}**` : `> **${label}:** ${target}`;
     const r = await resolve(e, sourcePath);
     if (!r.ok) {
       if (r.reason === "not-markdown") return null;
       state.warnings++;
-      return warning(`Missing: ${e.target}`);
+      return warning("Missing", e.target);
     }
     if (chain.includes(r.key)) {
       state.warnings++;
-      return warning(`Circular transclusion: ${e.target}`);
+      return warning("Circular transclusion", e.target);
     }
     const raw = normalizeNewlines(r.text);
     const id = blockIdOf(e.subpath);

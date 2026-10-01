@@ -32,7 +32,7 @@ describe("expandDocument", () => {
   it("stops at cycles with a warning callout", async () => {
     const files = { A: "A text\n\n![[B]]", B: "B text\n\n![[A]]" };
     expect(await expand("![[A]]", files)).toEqual({
-      text: "A text\n\nB text\n\n> [!warning] Circular transclusion: A",
+      text: "A text\n\nB text\n\n> **Circular transclusion:** A",
       warnings: 1,
     });
   });
@@ -51,7 +51,7 @@ describe("expandDocument", () => {
   });
 
   it("marks missing targets and counts them", async () => {
-    expect(await expand("A\n\n![[Nope#^x]]", {})).toEqual({ text: "A\n\n> [!warning] Missing: Nope#^x", warnings: 1 });
+    expect(await expand("A\n\n![[Nope#^x]]", {})).toEqual({ text: "A\n\n> **Missing:** Nope#^x", warnings: 1 });
   });
 
   it("leaves non-note embeds verbatim", async () => {
