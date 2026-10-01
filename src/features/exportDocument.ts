@@ -1,6 +1,7 @@
 import { App, FileSystemAdapter, normalizePath, TFile, TFolder } from "obsidian";
 import { promises as fsp } from "fs";
 import * as nodePath from "path";
+import { composeFilters, getContentFilters } from "../filters/contentFilters";
 import { vaultRelative } from "../paths";
 import { createResolver } from "../resolver/EmbedResolver";
 import { expandDocument } from "../resolver/expand";
@@ -46,6 +47,7 @@ export async function buildExport(app: App, file: TFile, options: ExportOptions)
   const { text, warnings } = await expandDocument(source, file.path, createResolver(app), {
     shiftHeadings: options.shiftHeadings,
     provenance: options.provenance,
+    filter: composeFilters(getContentFilters(app)),
   });
   return { text: runPipeline(text, options), warnings };
 }

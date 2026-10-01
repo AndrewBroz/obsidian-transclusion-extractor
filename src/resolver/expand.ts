@@ -1,3 +1,4 @@
+import type { FilterResult } from "../filters/contentFilters";
 import { balanceEmbed } from "../transforms/balance";
 import { findCodeRanges, inRanges } from "../transforms/codeRegions";
 import { blockIdOf, EmbedRef, findEmbeds } from "../transforms/embeds";
@@ -12,6 +13,7 @@ import type { Resolve } from "./types";
 export interface ExpandOptions {
   shiftHeadings: boolean;
   provenance: boolean;
+  filter?: (markdown: string) => FilterResult;
 }
 
 export interface ExpandResult {
@@ -26,8 +28,16 @@ interface State {
 export async function expandDocument(text: string, sourcePath: string, resolve: Resolve, opts: ExpandOptions): Promise<ExpandResult> {
   const { frontmatter, body } = splitFrontmatter(normalizeNewlines(text));
   const state: State = { warnings: 0 };
-  const expanded = await expandText(body, sourcePath, [sourcePath], resolve, opts, state);
-  return { text: frontmatter + expanded, warnings: state.warnings };
+  let own = body;
+  let notes = "";
+  if (opts.filter) {
+    const filtered = opts.filter(body);
+    own = filtered.text;
+    state.warnings += filtered.failures.length;
+    notes = filtered.failures.map((name) => `> **Filter failed (${name}):** document\n\n`).join("");
+  }
+  const expanded = await expandText(own, sourcePath, [sourcePath], resolve, opts, state);
+  return { text: frontmatter + notes + expanded, warnings: state.warnings };
 }
 
 async function expandText(
@@ -86,12 +96,20 @@ async function expandText(
       state.warnings++;
       return warning("Circular transclusion", e.target);
     }
-    const raw = normalizeNewlines(r.text);
+    let raw = normalizeNewlines(r.text);
+    let failureNotes: string[] = [];
+    if (opts.filter) {
+      const filtered = opts.filter(raw);
+      raw = filtered.text;
+      state.warnings += filtered.failures.length;
+      failureNotes = filtered.failures.map((name) => warning(`Filter failed (${name})`, e.target));
+    }
     const id = blockIdOf(e.subpath);
     const own = balanceEmbed(trimBlankLines(id ? stripBlockIds(raw, id) : raw));
     let content = await expandText(own, r.path, [...chain, r.key], resolve, opts, state);
     if (opts.shiftHeadings) content = shiftHeadings(content, computeShift(contextLevel, content));
     if (opts.provenance) content = `<!-- from: ${e.target} -->\n${content}\n<!-- /from -->`;
+    if (failureNotes.length > 0) content = [...failureNotes, content].join(inTable ? " " : "\n\n");
     return content;
   }
 }
