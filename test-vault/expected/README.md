@@ -39,14 +39,14 @@ purely cosmetic and you have confirmed Obsidian renders it the same way.
 
 In `Inline playground.md`, right-click each embed. After each check, undo with
 **Cmd-Z** and confirm that one undo restores the original line.
-- `![[Sources/Quotes#^q1]]` becomes `%% inlined from [[Sources/Quotes#^q1]] on <today> %%`
+- `![[Sources/Quotes#^q1]]` becomes `<!-- inlined from "Sources/Quotes#^q1" on <today> -->`
   followed by `Knowledge is a web, not a tree.`
-- The callout embed becomes `> %% inlined … %%` followed by
+- The callout embed becomes `> <!-- inlined … -->` followed by
   `> Second aside paragraph.`, and the callout still renders.
-- The list embed becomes `- %% inlined … %%` followed by `  - Main point`,
+- The list embed becomes `- <!-- inlined … -->` followed by `  - Main point`,
   `    - Supporting detail` and `    - Another detail`.
 - The mid-line embed becomes
-  `See %% inlined from [[Sources/Deep#^d1]] on <today> %% Deepest paragraph. inline.`
+  `See <!-- inlined from "Sources/Deep#^d1" on <today> --> Deepest paragraph. inline.`
 - The missing embed shows the notice "Can't inline: Sources/Missing#^nope not found",
   and the text is unchanged.
 - `![[diagram.png]]` shows no *Inline transclusion* menu item.
@@ -73,3 +73,9 @@ for the ⋯ button).
   unchanged. (If Obsidian doesn't render the missing embed as an embed box at
   all, there may be no ⋯ button to click — use right-click or the command
   palette instead, which cover this case regardless.)
+
+## Inkling (requires Inkling ≥ 0.11.0 enabled)
+
+- **Inlining the block:** inline `![[Sources/Reviewed#^r1]]`. The result is `<!-- inlined from "Sources/Reviewed#^r1" on <today> -->` followed by `The cat sat on the mat.`
+- **Exporting the playground:** export `Inline playground.md` with either preset. The Reviewed paragraphs read "The cat sat on the mat." and "Important findings were not confirmed.", with no `{`, `~>` or `>>` anywhere.
+- **Inkling disabled:** disable Inkling and inline again. The raw CriticMarkup is copied unchanged and no notice appears.
