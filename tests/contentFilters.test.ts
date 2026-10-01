@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyFilters, composeFilters, getContentFilters } from "../src/filters/contentFilters";
+import { applyFilters, composeFilters, getContentFilters, NamedFilter } from "../src/filters/contentFilters";
 
 const appWith = (plugin: unknown) => ({ plugins: { getPlugin: (id: string) => (id === "inkling" ? plugin : null) } });
 const inkling = { api: { version: 1, toOriginalText: (md: string) => md.replace(/\{\+\+.*?\+\+\}/g, "") } };
@@ -40,6 +40,31 @@ describe("applyFilters", () => {
       { name: "ok", filter: (s) => s.toUpperCase() },
     ]);
     expect(r).toEqual({ text: "AB", failures: ["bad"] });
+  });
+});
+
+describe("applyFilters — code protection", () => {
+  const stripAdditions: NamedFilter = { name: "strip", filter: (md) => md.replace(/\{\+\+.*?\+\+\}/g, "") };
+
+  it("leaves CriticMarkup-looking text inside inline code alone", () => {
+    const r = applyFilters("Use `{++x++}` here {++gone++}", [stripAdditions]);
+    expect(r).toEqual({ text: "Use `{++x++}` here ", failures: [] });
+  });
+
+  it("leaves CriticMarkup-looking text inside a fenced block alone", () => {
+    const text = "before\n```\n{++x++}\n```\nafter {++gone++}";
+    const r = applyFilters(text, [stripAdditions]);
+    expect(r).toEqual({ text: "before\n```\n{++x++}\n```\nafter ", failures: [] });
+  });
+
+  it("removes an addition that contains inline code, entirely", () => {
+    const r = applyFilters("{++see `x`++} y", [stripAdditions]);
+    expect(r).toEqual({ text: " y", failures: [] });
+  });
+
+  it("behaves exactly as before when there is no code", () => {
+    const r = applyFilters("{++a++} and {++b++}", [stripAdditions]);
+    expect(r).toEqual({ text: " and ", failures: [] });
   });
 });
 
