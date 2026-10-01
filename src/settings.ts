@@ -61,7 +61,10 @@ export function loadSettings(data: unknown): PluginSettings {
     Array.isArray(saved.presets) && saved.presets.length > 0
       ? saved.presets.map((p) => {
           const name = String(p.name ?? "Preset");
-          return { name, options: { ...builtInOptions(name), ...p.options } };
+          const builtin = builtInOptions(name);
+          const savedOptions = p.options ?? {};
+          const stripInlineMarkers = savedOptions.stripInlineMarkers ?? savedOptions.stripComments ?? builtin.stripInlineMarkers;
+          return { name, options: { ...builtin, ...savedOptions, stripInlineMarkers } };
         })
       : defaultPresets();
   const lastPreset =
