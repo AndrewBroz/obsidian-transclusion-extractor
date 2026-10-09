@@ -70,6 +70,48 @@ describe("expandDocument", () => {
     expect((await expand("```\n# not a heading\n```\n![[N#S]]", { "N#S": "# S" })).text).toBe("```\n# not a heading\n```\n# S");
   });
 
+  it("nests each embed under the parent heading, not under the previous embed's headings", async () => {
+    const files = { A: "# A\n\nText\n\n## A sub\n\nMore", B: "# B\n\nB text" };
+    expect((await expand("## Section\n\n![[A]]\n\n![[B]]", files)).text).toBe(
+      "## Section\n\n### A\n\nText\n\n#### A sub\n\nMore\n\n### B\n\nB text",
+    );
+    expect((await expand("## Section\n\n![[A]]\n\nBetween\n\n![[B]]", files)).text).toBe(
+      "## Section\n\n### A\n\nText\n\n#### A sub\n\nMore\n\nBetween\n\n### B\n\nB text",
+    );
+  });
+
+  it("nests the same note identically each time it is embedded under one heading", async () => {
+    const files = { A: "## A\n\n### A sub" };
+    expect((await expand("# Top\n\n![[A]]\n\n![[A]]", files)).text).toBe("# Top\n\n## A\n\n### A sub\n\n## A\n\n### A sub");
+  });
+
+  it("nests sibling embeds inside an embedded note under that note's heading", async () => {
+    const files = { C: "# C\n\n![[D]]\n\n![[E]]", D: "# D\n\n## D sub", E: "# E" };
+    expect((await expand("# R\n\n![[C]]", files)).text).toBe("# R\n\n## C\n\n### D\n\n#### D sub\n\n### E");
+  });
+
+  it("ignores heading-like lines in an embed's code when nesting the next embed", async () => {
+    const files = { A: "```\n# not a heading\n```", B: "# B" };
+    expect((await expand("## S\n\n![[A]]\n\n![[B]]", files)).text).toBe("## S\n\n```\n# not a heading\n```\n\n### B");
+  });
+
+  it("does not expand embeds inside an embedded note's code", async () => {
+    const doc = "```\n![[N#^a]]\n```";
+    expect((await expand("![[C]]", { C: doc, "N#^a": "Hello ^a" })).text).toBe(doc);
+  });
+
+  // Known limitation (see docs/superpowers/specs/2026-09-29-transclusion-extractor-design.md §5.1):
+  // in a flat Markdown file, parent text after an embed whose content ends in a deeper
+  // heading sits under that heading. Obsidian's reading view puts it under "## Section".
+  // `it.fails` passes while the limitation stands; turn it into `it` once it is fixed.
+  it.fails("keeps parent text after an embed under the parent's heading", async () => {
+    const files = { Child: "### Child's last heading\n\nChild text" };
+    const { text } = await expand("## Section\n\n![[Child]]\n\nText written under Section, after the embed.", files);
+    const before = text.slice(0, text.indexOf("Text written under Section"));
+    const headings = before.split("\n").filter((l) => /^#{1,6} /.test(l));
+    expect(headings.at(-1)).toBe("## Section");
+  });
+
   it("wraps content in provenance comments when enabled", async () => {
     expect((await expand("![[N#^a]]", { "N#^a": "Hello ^a" }, { ...OPTS, provenance: true })).text).toBe(
       "<!-- from: N#^a -->\nHello\n<!-- /from -->",

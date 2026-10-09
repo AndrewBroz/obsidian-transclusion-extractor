@@ -3,7 +3,7 @@ import { balanceEmbed } from "../transforms/balance";
 import { findCodeRanges, inRanges } from "../transforms/codeRegions";
 import { blockIdOf, EmbedRef, findEmbeds } from "../transforms/embeds";
 import { splitFrontmatter } from "../transforms/frontmatter";
-import { computeShift, lastHeadingLevel, shiftHeadings } from "../transforms/headings";
+import { computeShift, headingLevel, shiftHeadings } from "../transforms/headings";
 import { classifyLine } from "../transforms/spacing";
 import { spliceEmbed } from "../transforms/splice";
 import { stripBlockIds } from "../transforms/stripBlockIds";
@@ -77,7 +77,9 @@ async function expandText(
       result = [...spliced, ...rest];
     }
     out.push(...result);
-    if (!inRanges(code, lineStart)) context = lastHeadingLevel(result.join("\n")) || context;
+    // Context comes from this note's own headings only: as in Obsidian's reading view, an
+    // embed's headings don't change which heading later embeds and text sit under.
+    if (!inRanges(code, lineStart)) context = headingLevel(line) || context;
     lineStart = lineEnd + 1;
   }
   return out.join("\n");

@@ -109,9 +109,10 @@ Leading and trailing blank lines are trimmed from the extracted text.
 - An unresolved embed emits `> [!warning] Missing: Note#^id`.
 - A warning count is accumulated and reported.
 - **Heading shift** (when enabled) is applied per embed during expansion:
-  - The *context level* is the level of the nearest heading above the embed in the output being built (0 if there is none).
+  - The *context level* is the level of the nearest heading above the embed in the note that contains the embed (0 if there is none). Headings brought in by earlier embeds do not count: as in Obsidian's reading view, each embed sits under the heading it was written under, so several embeds under one heading are nested identically. Headings inside code are ignored.
   - The shift is `max(0, contextLevel + 1 − minHeadingLevelInContent)`.
   - Headings are only ever demoted, never promoted. Levels are clamped at 6.
+  - Known limitation: the output is flat Markdown, so parent text that follows an embed ending in a deeper heading reads as part of that heading's section, although Obsidian shows it under the parent's heading. Expressing the boundary would need a new construct (a repeated heading, a container, or similar), which is not part of this design. With *Source markers* on, `<!-- /from -->` marks where the embed ends.
 - **Provenance** (when enabled): expanded content is wrapped as
   `<!-- from: Note#^id -->` … `<!-- /from -->`. HTML comments are not affected by `%%` stripping.
 - **Prefixes** (`prefix.ts`): if the embed line has a blockquote or callout prefix (`> `, nested `> > `) or list indentation, every inserted line gets the same prefix or continuation indent.
