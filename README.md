@@ -29,7 +29,7 @@ Missing or circular embeds become plain blockquotes (`> **Missing:** Note#^id`) 
 
 ## Inkling integration (optional)
 
-If [Inkling](https://github.com/AndrewBroz/obsidian-inkling) 0.11.0 or later is enabled, Transclusion Extractor uses it to show the **original text** of notes under review:
+If [Inkling Markup](https://github.com/AndrewBroz/obsidian-inkling) 0.11.0 or later is enabled (plugin id `inkling-markup` from 0.12.0, `inkling` before that), Transclusion Extractor uses it to show the **original text** of notes under review:
 
 - **Inline transclusion** copies the original text: pending suggestions are left out (shown as rejected), comments are removed, highlights are unwrapped.
 - **Every export** (all presets) contains the original text of the parent note and of every transclusion.

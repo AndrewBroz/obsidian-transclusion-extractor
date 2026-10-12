@@ -25,16 +25,29 @@ interface InklingApiLike {
   toOriginalText?: unknown;
 }
 
+// Inkling's plugin id since 0.12.0, then its pre-0.12 id. "inkling" now also belongs to an unrelated
+// community plugin; the API shape check below is what keeps that one from being used.
+const INKLING_PLUGIN_IDS = ["inkling-markup", "inkling"];
+
+function findInklingApi(app: unknown): InklingApiLike | null {
+  for (const id of INKLING_PLUGIN_IDS) {
+    let plugin: unknown;
+    try {
+      plugin = (app as PluginHost | null | undefined)?.plugins?.getPlugin?.(id);
+    } catch {
+      return null;
+    }
+    const api = (plugin as { api?: InklingApiLike } | null | undefined)?.api;
+    if (api && typeof api.version === "number" && api.version >= 1 && typeof api.toOriginalText === "function")
+      return api;
+  }
+  return null;
+}
+
 /** Filters available right now; call per action so enabling/disabling plugins takes effect immediately. */
 export function getContentFilters(app: unknown): NamedFilter[] {
-  let plugin: unknown;
-  try {
-    plugin = (app as PluginHost | null | undefined)?.plugins?.getPlugin?.("inkling");
-  } catch {
-    return [];
-  }
-  const api = (plugin as { api?: InklingApiLike } | null | undefined)?.api;
-  if (!api || typeof api.version !== "number" || api.version < 1 || typeof api.toOriginalText !== "function") return [];
+  const api = findInklingApi(app);
+  if (!api) return [];
   const toOriginalText = api.toOriginalText as (markdown: string) => unknown;
   return [
     {

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { applyFilters, composeFilters, getContentFilters, NamedFilter } from "../src/filters/contentFilters";
 
-const appWith = (plugin: unknown) => ({ plugins: { getPlugin: (id: string) => (id === "inkling" ? plugin : null) } });
+const appWithPlugins = (plugins: Record<string, unknown>) => ({ plugins: { getPlugin: (id: string) => plugins[id] ?? null } });
+const appWith = (plugin: unknown) => appWithPlugins({ "inkling-markup": plugin });
 const inkling = { api: { version: 1, toOriginalText: (md: string) => md.replace(/\{\+\+.*?\+\+\}/g, "") } };
 
 describe("getContentFilters", () => {
@@ -9,6 +10,20 @@ describe("getContentFilters", () => {
     const filters = getContentFilters(appWith(inkling));
     expect(filters.map((f) => f.name)).toEqual(["inkling"]);
     expect(filters[0].filter("a{++b++}c")).toBe("ac");
+  });
+  it("falls back to Inkling's pre-0.12 plugin id", () => {
+    const filters = getContentFilters(appWithPlugins({ inkling }));
+    expect(filters.map((f) => f.name)).toEqual(["inkling"]);
+    expect(filters[0].filter("a{++b++}c")).toBe("ac");
+  });
+  it("prefers the current plugin id over the pre-0.12 one", () => {
+    const legacy = { api: { version: 1, toOriginalText: () => "legacy" } };
+    const [f] = getContentFilters(appWithPlugins({ "inkling-markup": inkling, inkling: legacy }));
+    expect(f.filter("a{++b++}c")).toBe("ac");
+  });
+  it("ignores an unrelated plugin installed under the old id", () => {
+    expect(getContentFilters(appWithPlugins({ inkling: { api: { draw: () => {} } } }))).toEqual([]);
+    expect(getContentFilters(appWithPlugins({ inkling: {} }))).toEqual([]);
   });
   it("returns nothing when Inkling is absent or disabled", () => {
     expect(getContentFilters(appWith(null))).toEqual([]);
